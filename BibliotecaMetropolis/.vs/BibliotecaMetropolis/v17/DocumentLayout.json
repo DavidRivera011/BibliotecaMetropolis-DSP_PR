@@ -1,7 +1,12 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\INTEL\\OneDrive\\Documentos\\DSP\\desafiopractico2\\BibliotecaMetropolis\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\GitHub\\BibliotecaMetropolis-DSP_PR\\BibliotecaMetropolis\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{3B2130B0-0313-4BBE-A789-C0A07E36FCB0}|BibliotecaMetropolis\\BibliotecaMetropolis.csproj|c:\\github\\bibliotecametropolis-dsp_pr\\bibliotecametropolis\\bibliotecametropolis\\models\\db\\bibliotecametropoliscontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{3B2130B0-0313-4BBE-A789-C0A07E36FCB0}|BibliotecaMetropolis\\BibliotecaMetropolis.csproj|solutionrelative:bibliotecametropolis\\models\\db\\bibliotecametropoliscontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,7 +14,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 173,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Bookmark",
@@ -22,6 +27,19 @@
             {
               "$type": "Bookmark",
               "Name": "ST:128:0:{75188d03-9892-4ae2-abf1-207126247ce5}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "BibliotecaMetropolisContext.cs",
+              "DocumentMoniker": "C:\\GitHub\\BibliotecaMetropolis-DSP_PR\\BibliotecaMetropolis\\BibliotecaMetropolis\\Models\\DB\\BibliotecaMetropolisContext.cs",
+              "RelativeDocumentMoniker": "BibliotecaMetropolis\\Models\\DB\\BibliotecaMetropolisContext.cs",
+              "ToolTip": "C:\\GitHub\\BibliotecaMetropolis-DSP_PR\\BibliotecaMetropolis\\BibliotecaMetropolis\\Models\\DB\\BibliotecaMetropolisContext.cs",
+              "RelativeToolTip": "BibliotecaMetropolis\\Models\\DB\\BibliotecaMetropolisContext.cs",
+              "ViewState": "AgIAAIAAAAAAAAAAAAAswI4AAAALAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-11T03:05:09.991Z",
+              "EditorCaption": ""
             }
           ]
         },
