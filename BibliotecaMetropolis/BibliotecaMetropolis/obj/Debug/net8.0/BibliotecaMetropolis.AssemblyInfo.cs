@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BibliotecaMetropolis")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+600564f2396dd092e967505c4a80267893876c04")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+a46db91c9085d28c7d654be28e5ecfb65a7c295f")]
 [assembly: System.Reflection.AssemblyProductAttribute("BibliotecaMetropolis")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BibliotecaMetropolis")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
