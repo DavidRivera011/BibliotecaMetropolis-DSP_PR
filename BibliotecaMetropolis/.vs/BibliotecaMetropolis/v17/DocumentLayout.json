@@ -5,6 +5,7 @@
     {
       "AbsoluteMoniker": "D:0:0:{3B2130B0-0313-4BBE-A789-C0A07E36FCB0}|BibliotecaMetropolis\\BibliotecaMetropolis.csproj|c:\\github\\bibliotecametropolis-dsp_pr\\bibliotecametropolis\\bibliotecametropolis\\models\\db\\bibliotecametropoliscontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{3B2130B0-0313-4BBE-A789-C0A07E36FCB0}|BibliotecaMetropolis\\BibliotecaMetropolis.csproj|solutionrelative:bibliotecametropolis\\models\\db\\bibliotecametropoliscontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+
     }
   ],
   "DocumentGroupContainers": [
@@ -15,7 +16,21 @@
         {
           "DockedWidth": 173,
           "SelectedChildIndex": 3,
+
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "C:\\GitHub\\BibliotecaMetropolis-DSP_PR\\BibliotecaMetropolis\\BibliotecaMetropolis\\Views\\Home\\Index.cshtml",
+              "RelativeDocumentMoniker": "BibliotecaMetropolis\\Views\\Home\\Index.cshtml",
+              "ToolTip": "C:\\GitHub\\BibliotecaMetropolis-DSP_PR\\BibliotecaMetropolis\\BibliotecaMetropolis\\Views\\Home\\Index.cshtml",
+              "RelativeToolTip": "BibliotecaMetropolis\\Views\\Home\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2025-10-11T17:23:17.936Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
