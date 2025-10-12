@@ -23,7 +23,8 @@ namespace BibliotecaMetropolis.Controllers
 
         public async Task<IActionResult> Index()
         {
-            return View(await _Context.Institucions.ToListAsync());
+            var instituciones = await _Context.Institucions.ToListAsync();
+            return View(instituciones);
         }
 
         public IActionResult Create() => View();
@@ -32,6 +33,17 @@ namespace BibliotecaMetropolis.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Institucion institucion)
         {
+            if (string.IsNullOrWhiteSpace(institucion.Nombre))
+            {
+                ModelState.AddModelError("Error", "El nombre de la institución es obligatorio.");
+            }
+
+            bool Existe = await _Context.Institucions.AnyAsync(i => i.Nombre == institucion.Nombre);
+
+            if (Existe)
+            {
+                ModelState.AddModelError("Error", "Esta institución ya está registrada.");
+            }
             if (ModelState.IsValid)
             {
                 _Context.Add(institucion);

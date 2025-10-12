@@ -23,7 +23,8 @@ namespace BibliotecaMetropolis.Controllers
 
         public async Task<IActionResult> Index()
         {
-            return View(await _Context.Editorials.ToListAsync());
+            var autores = await _Context.Editorials.ToListAsync();
+            return View(autores);
         }
 
         //Creación/Registro de Editoriales
@@ -33,6 +34,18 @@ namespace BibliotecaMetropolis.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Editorial editorial)
         {
+            if (string.IsNullOrWhiteSpace(editorial.Nombre))
+            {
+                ModelState.AddModelError("Error", "El nombre de la editorial es obligatorio.");
+            }
+
+            bool Existe = await _Context.Editorials.AnyAsync(e => e.Nombre == editorial.Nombre);
+
+            if (Existe)
+            {
+                ModelState.AddModelError("Error", "Ya existe una editorial registrada con ese nombre.");
+            }
+
             if (ModelState.IsValid)
             {
                 _Context.Add(editorial);
