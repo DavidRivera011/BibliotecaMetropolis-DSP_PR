@@ -9,11 +9,11 @@ public partial class Usuario
 
     public string NombreUsuario { get; set; } = null!;
 
-    public string Contrasena { get; set; } = null!;
+    public string Contrasena { get; set; } = null!; //vamos a hashear las contraseñas en la lógica de negocio porque no pueden estar en texto plano
 
     public string? NombreCompleto { get; set; }
 
-    public bool? Activo { get; set; }
+    public bool Activo { get; set; }
 
     public int IdRol { get; set; }
 

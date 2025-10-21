@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace BibliotecaMetropolis.Models.DB;
 
-public partial class Editorial
+public partial class TipoRecurso
 {
-    public int IdEdit { get; set; }
+    public int IdTipoR { get; set; }
 
     public string Nombre { get; set; } = null!;
 
