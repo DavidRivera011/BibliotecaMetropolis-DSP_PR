@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ----------------------
 builder.Services.AddControllersWithViews();
 
-// DbContext (lee la cadena desde appsettings.json)
+// DbContext
 builder.Services.AddDbContext<BibliotecaMetropolisContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -34,14 +34,14 @@ builder.Services.AddDataProtection()
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession(options =>
 {
-    options.Cookie.Name = ".BibliotecaMetropolis.Session"; // nuevo nombre forzado
+    options.Cookie.Name = ".BibliotecaMetropolis.Session";
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });
 
 // ----------------------
-// JWT configuration: lee la sección "Jwt" en appsettings.json
+// JWT configuration
 // ----------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var keyString = jwtSettings["Key"];
@@ -70,7 +70,7 @@ builder.Services.AddAuthentication(options =>
         ClockSkew = TimeSpan.FromMinutes(2)
     };
 
-    // Opcional: permitir que el middleware lea el token desde Session (útil en MVC)
+    // permitir que el middleware lea el token desde Session
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
@@ -88,14 +88,8 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// ----------------------
-// Build app
-// ----------------------
 var app = builder.Build();
 
-// ----------------------
-// Middleware pipeline
-// ----------------------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
@@ -107,7 +101,6 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-// Orden correcto: Session antes de Authentication/Authorization
 app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
