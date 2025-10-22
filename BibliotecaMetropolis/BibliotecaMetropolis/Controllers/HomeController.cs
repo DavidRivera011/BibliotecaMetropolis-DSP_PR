@@ -4,6 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.IdentityModel.Tokens.Jwt;
 
+/*Integrantes:
+ Castellón Hernández, Emily Alessandra
+ López Avelar, Vladimir Alexander
+ Martínez Nolasco, Julio César
+ Peñate Valle, William Eliseo
+ Rivera Linares, Julio David
+ */
+
+
 namespace BibliotecaMetropolis.Controllers
 {
     public class HomeController : Controller
