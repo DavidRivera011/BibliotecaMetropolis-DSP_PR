@@ -7,6 +7,14 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
+/*Integrantes:
+ Castellón Hernández, Emily Alessandra
+ López Avelar, Vladimir Alexander
+ Martínez Nolasco, Julio César
+ Peñate Valle, William Eliseo
+ Rivera Linares, Julio David
+ */
+
 namespace BibliotecaMetropolis.Controllers
 {
     public class AuthController : Controller
@@ -59,7 +67,7 @@ namespace BibliotecaMetropolis.Controllers
             // Guardar token en Session junto a usuario y rol
             HttpContext.Session.SetString("JWToken", token);
             HttpContext.Session.SetString("NombreUsuario", user.NombreUsuario);
-            HttpContext.Session.SetString("Rol", user.IdRolNavigation.NombreRol);
+            HttpContext.Session.SetString("Rol", user.IdRolNavigation?.NombreRol ?? string.Empty);
 
             return RedirectToAction("Index", "Home");
         }
@@ -74,14 +82,19 @@ namespace BibliotecaMetropolis.Controllers
         private string GenerarJwt(Usuario usuario)
         {
             var jwtSettings = _config.GetSection("Jwt");
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings["Key"]));
+            var keyString = jwtSettings["Key"];
+            if (string.IsNullOrEmpty(keyString))
+                throw new InvalidOperationException("La clave JWT no está configurada.");
 
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var nombreRol = usuario.IdRolNavigation?.NombreRol ?? string.Empty;
 
             var claims = new[]
             {
                 new Claim(JwtRegisteredClaimNames.Sub, usuario.NombreUsuario),
-                new Claim("rol", usuario.IdRolNavigation.NombreRol),
+                new Claim("rol", nombreRol),
                 new Claim("id", usuario.IdUsuario.ToString())
             };
 

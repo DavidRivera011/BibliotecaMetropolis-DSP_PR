@@ -4,7 +4,7 @@
     ViewData["Title"] = "Inicio";
     Layout = "_Layout";
     // pequeño helper local para la inicial (seguro frente a null/empty)
-    string usuarioNombreSafe = string.IsNullOrWhiteSpace(Model.UsuarioNombre) ? null : Model.UsuarioNombre.Trim();
+    string usuarioNombreSafe = string.IsNullOrWhiteSpace(Model.UsuarioNombre) ? string.Empty : Model.UsuarioNombre.Trim();
     string inicial = !string.IsNullOrEmpty(usuarioNombreSafe) ? usuarioNombreSafe.Substring(0, 1).ToUpperInvariant() : "U";
 }
 
@@ -66,7 +66,7 @@ else
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center mt-2">
-                        <a asp-controller="Recurso" asp-action="Details" asp-route-id="@item.Id" class="btn-more">Ver más</a>
+                        <a asp-controller="Recursos" asp-action="Details" asp-route-id="@item.Id" class="btn-more">Ver más</a>
                         <div class="text-muted small">@item.Editorial</div>
                     </div>
                 </div>
