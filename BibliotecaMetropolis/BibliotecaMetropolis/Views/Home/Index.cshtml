@@ -1,8 +1,76 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model BibliotecaMetropolis.Models.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Inicio";
+    Layout = "_Layout";
+    // pequeño helper local para la inicial (seguro frente a null/empty)
+    string usuarioNombreSafe = string.IsNullOrWhiteSpace(Model.UsuarioNombre) ? null : Model.UsuarioNombre.Trim();
+    string inicial = !string.IsNullOrEmpty(usuarioNombreSafe) ? usuarioNombreSafe.Substring(0, 1).ToUpperInvariant() : "U";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="top-row d-flex align-items-center gap-3 mb-4">
+    <div class="user-card d-flex align-items-center gap-3">
+        <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center"
+             style="width:64px;height:64px;background:#ff8a00;color:#fff;font-weight:700;">
+            @inicial
+        </div>
+        <div>
+            <div style="font-weight:700; font-size:1rem;">@(Model.UsuarioNombre ?? "Invitado")</div>
+            <div style="color:#666; font-size:0.9rem;">@(Model.Rol ?? "Sin rol")</div>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="text-muted" style="font-size:0.85rem">Recursos registrados</div>
+        <div style="font-size:1.8rem; font-weight:700;">@Model.RecursosCount</div>
+    </div>
+
+    <div class="stat-card">
+        <div class="text-muted" style="font-size:0.85rem">Editoriales</div>
+        <div style="font-size:1.8rem; font-weight:700;">@Model.EditorialesCount</div>
+    </div>
 </div>
+
+<div>
+    <form method="get" asp-action="Index" class="search-row">
+        <input name="q" value="@Model.SearchTerm" class="form-control form-control-lg" placeholder="Buscar por título, autor, editorial o palabra clave..." />
+        <button type="submit" class="btn btn-lg" style="background:#ff8a00; color:white;">Buscar</button>
+    </form>
+</div>
+
+@if (Model.Recursos == null || !Model.Recursos.Any())
+{
+    <div class="alert alert-light">No se encontraron recursos.</div>
+}
+else
+{
+    <div class="recurso-grid">
+        @foreach (var item in Model.Recursos)
+        {
+            <div class="recurso-card">
+                <div class="recurso-thumb">
+                    @if (!string.IsNullOrEmpty(item.ImagenRuta))
+                    {
+                        <img src="@item.ImagenRuta" alt="@item.Titulo" />
+                    }
+                    else
+                    {
+                        <div style="text-align:center;color:#bbb;">Sin imagen</div>
+                    }
+                </div>
+
+                <div class="recurso-body">
+                    <div>
+                        <div class="recurso-title">@item.Titulo</div>
+                        <div class="recurso-author">@item.Autor</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        <a asp-controller="Recurso" asp-action="Details" asp-route-id="@item.Id" class="btn-more">Ver más</a>
+                        <div class="text-muted small">@item.Editorial</div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

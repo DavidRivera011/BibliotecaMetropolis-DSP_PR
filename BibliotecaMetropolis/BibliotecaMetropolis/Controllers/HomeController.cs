@@ -1,32 +1,98 @@
-using System.Diagnostics;
 using BibliotecaMetropolis.Models;
+using BibliotecaMetropolis.Models.DB;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace BibliotecaMetropolis.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ILogger<HomeController> _logger;
+        private readonly BibliotecaMetropolisContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(BibliotecaMetropolisContext context)
         {
-            _logger = logger;
+            _context = context;
         }
 
-        public IActionResult Index()
+        // GET: /Home/Index?q=...
+        public async Task<IActionResult> Index(string q)
         {
-            return View();
-        }
+            // Validar que haya sesión y token
+            var token = HttpContext.Session.GetString("JWToken");
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Auth");
 
-        public IActionResult Privacy()
-        {
-            return View();
-        }
+            // Verificar expiración del JWT
+            var handler = new JwtSecurityTokenHandler();
+            var jwt = handler.ReadJwtToken(token);
+            if (jwt.ValidTo < DateTime.UtcNow)
+            {
+                HttpContext.Session.Clear();
+                return RedirectToAction("Login", "Auth");
+            }
 
-        [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-        public IActionResult Error()
-        {
-            return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+            // Crear el ViewModel principal del dashboard
+            var vm = new DashboardViewModel
+            {
+                UsuarioNombre = HttpContext.Session.GetString("NombreUsuario"),
+                Rol = HttpContext.Session.GetString("Rol"),
+                SearchTerm = q
+            };
+
+            // Contadores principales
+            vm.RecursosCount = await _context.Recursos.CountAsync();
+            vm.EditorialesCount = await _context.Editorials.CountAsync();
+
+            // Query base
+            var query = _context.Recursos
+                .Include(r => r.IdEditNavigation)
+                .AsQueryable();
+
+            // Filtro de búsqueda
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var term = q.Trim();
+                query = query.Where(r =>
+                    r.Titulo.Contains(term) ||
+                    (r.PalabrasBusqueda != null && r.PalabrasBusqueda.Contains(term)) ||
+                    (r.Descripcion != null && r.Descripcion.Contains(term)) ||
+                    (r.IdEditNavigation != null && r.IdEditNavigation.Nombre.Contains(term))
+                );
+            }
+
+            // Traer recursos limitados
+            var recursos = await query
+                .OrderByDescending(r => r.AnioPublicacion ?? 0)
+                .Take(24)
+                .ToListAsync();
+
+            // Obtener autores principales
+            var recIds = recursos.Select(r => r.IdRec).ToList();
+            var autoresPrincipales = await _context.AutoresRecursos
+                .Include(ar => ar.IdAutorNavigation)
+                .Where(ar => recIds.Contains(ar.IdRec) && ar.EsPrincipal)
+                .ToListAsync();
+
+            // Convertir a viewmodel
+            vm.Recursos = recursos.Select(r =>
+            {
+                var autorEntry = autoresPrincipales.FirstOrDefault(a => a.IdRec == r.IdRec);
+                var autorNombre = autorEntry?.IdAutorNavigation != null
+                    ? $"{autorEntry.IdAutorNavigation.Nombres} {autorEntry.IdAutorNavigation.Apellidos}".Trim()
+                    : "Desconocido";
+
+                return new RecursoCardViewModel
+                {
+                    Id = r.IdRec,
+                    Titulo = r.Titulo,
+                    ImagenRuta = string.IsNullOrWhiteSpace(r.ImagenRuta) ? null : r.ImagenRuta,
+                    Autor = autorNombre,
+                    Editorial = r.IdEditNavigation?.Nombre
+                };
+            }).ToList();
+
+            return View(vm);
         }
     }
 }
