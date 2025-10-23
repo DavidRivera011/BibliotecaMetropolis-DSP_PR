@@ -24,53 +24,100 @@ namespace BibliotecaMetropolis.Models
         public int? Cantidad { get; set; }
         public int IdTipoR { get; set; }
         public int? IdPais { get; set; }
+
+        /// <summary>
+        /// Editorial seleccionada (nullable).
+        /// </summary>
         public int? IdEdit { get; set; }
 
-        // CSV enviado desde la vista (campo oculto). Cada tag separado por coma.
+        /// <summary>
+        /// CSV enviado desde la vista (campo oculto). Cada tag separado por coma.
+        /// Validado con IValidatableObject además de este atributo.
+        /// </summary>
         [StringLength(800, ErrorMessage = "TagsCsv demasiado largo.")]
         public string? TagsCsv { get; set; }
 
-        // para mostrar las tags actuales en la UI (GET)
+        /// <summary>
+        /// para mostrar las tags actuales en la UI (GET)
+        /// </summary>
         public List<string> Tags { get; set; } = new List<string>();
+
+        /// <summary>
+        /// Ids de autores seleccionados en el formulario (multi-select).
+        /// </summary>
         public List<int> SelectedAuthorIds { get; set; } = new List<int>();
+
+        // ----- Configuración de límites -----
+        private const int MaxTags = 8;
+        private const int MaxTagLength = 100;
+
+        /// <summary>
+        /// Helper que parsea TagsCsv (o Tags si lo prefieres) en una lista limpia y normalizada.
+        /// - Trim
+        /// - elimina entradas vacías
+        /// - truncates cada tag a MaxTagLength
+        /// - distinct case-insensitive
+        /// - toma hasta MaxTags
+        /// </summary>
+        public List<string> ParsedTags()
+        {
+            IEnumerable<string> source;
+
+            if (!string.IsNullOrWhiteSpace(TagsCsv))
+            {
+                source = TagsCsv!
+                    .Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries)
+                    .Select(t => t.Trim());
+            }
+            else if (Tags != null && Tags.Any())
+            {
+                source = Tags.Select(t => (t ?? string.Empty).Trim());
+            }
+            else
+            {
+                source = Enumerable.Empty<string>();
+            }
+
+            var list = source
+                .Where(t => !string.IsNullOrWhiteSpace(t))
+                .Select(t => t.Length > MaxTagLength ? t.Substring(0, MaxTagLength) : t)
+                .Distinct(System.StringComparer.OrdinalIgnoreCase)
+                .Take(MaxTags)
+                .ToList();
+
+            return list;
+        }
 
         // Validaciones personalizadas:
         // - máximo 8 tags
         // - cada tag máximo 100 caracteres
+        // - SelectedAuthorIds no contiene ids negativos
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             var results = new List<ValidationResult>();
 
-            // Preferimos validar usando Tags (ya poblado en GET) si existe;
-            // en POST el binder nos trae TagsCsv, entonces parseamos TagsCsv.
-            IEnumerable<string> tagsSource = Tags ?? Enumerable.Empty<string>();
+            var tagsList = ParsedTags();
 
-            if (string.IsNullOrWhiteSpace(TagsCsv) == false)
+            if (tagsList.Count > MaxTags)
             {
-                tagsSource = TagsCsv
-                    .Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim())
-                    .Where(t => !string.IsNullOrWhiteSpace(t));
-            }
-
-            var tagsList = tagsSource
-                .Select(t => t.Trim())
-                .Where(t => !string.IsNullOrWhiteSpace(t))
-                .Distinct(System.StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            if (tagsList.Count > 8)
-            {
-                results.Add(new ValidationResult("Máximo 8 etiquetas.", new[] { nameof(TagsCsv) }));
+                results.Add(new ValidationResult($"Máximo {MaxTags} etiquetas.", new[] { nameof(TagsCsv) }));
             }
 
             foreach (var t in tagsList)
             {
-                if (t.Length > 100)
+                if (t.Length > MaxTagLength)
                 {
-                    results.Add(new ValidationResult($"La etiqueta '{t}' no puede exceder 100 caracteres.", new[] { nameof(TagsCsv) }));
+                    results.Add(new ValidationResult($"La etiqueta '{t}' no puede exceder {MaxTagLength} caracteres.", new[] { nameof(TagsCsv) }));
                 }
             }
+
+            // Validación sencilla sobre SelectedAuthorIds (no negativos).
+            if (SelectedAuthorIds != null && SelectedAuthorIds.Any(id => id < 0))
+            {
+                results.Add(new ValidationResult("Lista de autores contiene un id no válido.", new[] { nameof(SelectedAuthorIds) }));
+            }
+
+            // -> Puedes añadir más validaciones aquí (ej: máximo X autores, reglas sobre título, etc.)
 
             return results;
         }
