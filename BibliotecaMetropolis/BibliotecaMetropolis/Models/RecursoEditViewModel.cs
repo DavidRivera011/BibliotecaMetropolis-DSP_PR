@@ -16,7 +16,6 @@ namespace BibliotecaMetropolis.Models
         public int? AnioPublicacion { get; set; }
         public string? Edicion { get; set; }
 
-        // Puedes eliminar PalabrasBusqueda si ya no lo usas.
         public string? PalabrasBusqueda { get; set; }
 
         public string? Descripcion { get; set; }
@@ -117,7 +116,6 @@ namespace BibliotecaMetropolis.Models
                 results.Add(new ValidationResult("Lista de autores contiene un id no válido.", new[] { nameof(SelectedAuthorIds) }));
             }
 
-            // -> Puedes añadir más validaciones aquí (ej: máximo X autores, reglas sobre título, etc.)
 
             return results;
         }

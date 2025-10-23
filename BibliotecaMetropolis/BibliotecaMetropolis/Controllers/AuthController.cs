@@ -143,7 +143,7 @@ namespace BibliotecaMetropolis.Controllers
 
 
             // Aqui forzamos el rol de usuario normal y el activo para que no lo pueda cambiar el usuario en web
-            model.IdRol = 1;
+            model.IdRol = 2;
             model.Activo = true;
 
             // Crear entidad Usuario

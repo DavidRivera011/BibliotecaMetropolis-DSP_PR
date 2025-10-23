@@ -64,8 +64,6 @@ namespace BibliotecaMetropolis.Controllers
                 Precio = recurso.Precio,
                 PalabrasBusqueda = recurso.PalabrasBusqueda,
                 Descripcion = recurso.Descripcion
-                // Si tu RecursoDetailsViewModel tiene una propiedad List<string> Tags, puedes asignarla aquí:
-                // Tags = recurso.IdPalabraClaves?.Select(pk => pk.Palabra).ToList() ?? new List<string>()
             };
 
             return View(vm);
@@ -292,14 +290,14 @@ namespace BibliotecaMetropolis.Controllers
 
             _context.AutoresRecursos.RemoveRange(currentARs);
 
-            // añadir nuevas relaciones (puedes adaptar la lógica para marcar el principal)
+            // añadir nuevas relaciones
             foreach (var idAutor in selected.Distinct())
             {
                 _context.AutoresRecursos.Add(new AutoresRecurso
                 {
                     IdRec = recurso.IdRec,
                     IdAutor = idAutor,
-                    EsPrincipal = false // o define lógica para principal si lo necesitas
+                    EsPrincipal = false
                 });
             }
             // -----------------------------------------------------------
@@ -326,7 +324,7 @@ namespace BibliotecaMetropolis.Controllers
             var recurso = await _context.Recursos.FindAsync(id);
             if (recurso == null) return NotFound();
 
-            // regla: solo eliminar si cantidad == 0 o null
+            //Sólo elimina si la cantidad == 0 o tiene valor null
             if ((recurso.Cantidad ?? 0) > 0)
             {
                 TempData["Error"] = "El recurso no puede eliminarse porque su cantidad es mayor a 0.";
