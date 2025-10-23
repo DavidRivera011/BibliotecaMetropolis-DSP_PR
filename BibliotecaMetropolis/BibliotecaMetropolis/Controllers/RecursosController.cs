@@ -32,7 +32,7 @@ namespace BibliotecaMetropolis.Controllers
                 .Include(r => r.IdEditNavigation)
                 .Include(r => r.IdPaisNavigation)
                 .Include(r => r.IdTipoRNavigation)
-                .Include(r => r.IdPalabraClaves) // cargar tags también
+                .Include(r => r.IdPalabraClaves) // cargar tags
                 .FirstOrDefaultAsync(r => r.IdRec == id);
 
             if (recurso == null) return NotFound();
@@ -64,8 +64,6 @@ namespace BibliotecaMetropolis.Controllers
                 Precio = recurso.Precio,
                 PalabrasBusqueda = recurso.PalabrasBusqueda,
                 Descripcion = recurso.Descripcion
-                // Si tu RecursoDetailsViewModel tiene una propiedad List<string> Tags, puedes asignarla aquí:
-                // Tags = recurso.IdPalabraClaves?.Select(pk => pk.Palabra).ToList() ?? new List<string>()
             };
 
             return View(vm);
@@ -76,7 +74,6 @@ namespace BibliotecaMetropolis.Controllers
         {
             var vm = new RecursoEditViewModel
             {
-                // valores por defecto si quieres
             };
 
             ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
@@ -188,6 +185,12 @@ namespace BibliotecaMetropolis.Controllers
 
             if (recurso == null) return NotFound();
 
+            // obtener autores relacionados para este recurso
+            var autoresRelacionados = await _context.AutoresRecursos
+                .Where(ar => ar.IdRec == id)
+                .Select(ar => ar.IdAutor)
+                .ToListAsync();
+
             var vm = new RecursoEditViewModel
             {
                 IdRec = recurso.IdRec,
@@ -203,12 +206,15 @@ namespace BibliotecaMetropolis.Controllers
                 PalabrasBusqueda = recurso.PalabrasBusqueda,
                 IdEdit = recurso.IdEdit,
                 // convertir las PalabraClave relacionadas a lista de strings para renderizar chips
-                Tags = recurso.IdPalabraClaves?.Select(pk => pk.Palabra).ToList() ?? new List<string>()
+                Tags = recurso.IdPalabraClaves?.Select(pk => pk.Palabra).ToList() ?? new List<string>(),
+                // inicializar autores seleccionados para que el JS / la vista los muestre
+                SelectedAuthorIds = autoresRelacionados ?? new List<int>()
             };
 
             ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
             ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
             ViewData["Editoriales"] = await _context.Editorials.OrderBy(e => e.Nombre).ToListAsync();
+            ViewData["Autores"] = await _context.Autors.OrderBy(a => a.Nombres).ThenBy(a => a.Apellidos).ToListAsync();
 
             return View(vm);
         }
@@ -222,6 +228,7 @@ namespace BibliotecaMetropolis.Controllers
                 ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
                 ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
                 ViewData["Editoriales"] = await _context.Editorials.OrderBy(e => e.Nombre).ToListAsync();
+                ViewData["Autores"] = await _context.Autors.OrderBy(a => a.Nombres).ThenBy(a => a.Apellidos).ToListAsync();
                 return View(model);
             }
 
@@ -244,7 +251,7 @@ namespace BibliotecaMetropolis.Controllers
             recurso.Precio = model.Precio;
             recurso.IdEdit = model.IdEdit;
 
-            // ---------- NUEVO: manejar TagsCsv y relación PalabraClave ------------
+            // ---------- manejar TagsCsv y relación PalabraClave ------------
             var tagsRaw = model.TagsCsv ?? string.Empty;
             var tags = tagsRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
                               .Select(t => t.Trim())
