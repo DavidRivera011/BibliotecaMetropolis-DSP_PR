@@ -71,6 +71,113 @@ namespace BibliotecaMetropolis.Controllers
             return View(vm);
         }
 
+        // GET: /Recursos/Create
+        public async Task<IActionResult> Create()
+        {
+            var vm = new RecursoEditViewModel
+            {
+                // valores por defecto si quieres
+            };
+
+            ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
+            ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
+            ViewData["Editoriales"] = await _context.Editorials.OrderBy(e => e.Nombre).ToListAsync();
+            ViewData["Autores"] = await _context.Autors.OrderBy(a => a.Nombres).ThenBy(a => a.Apellidos).ToListAsync();
+
+            return View(vm);
+        }
+
+        // POST: /Recursos/Create
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(RecursoEditViewModel model)
+        {
+            if (!ModelState.IsValid)
+            {
+                ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
+                ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
+                ViewData["Editoriales"] = await _context.Editorials.OrderBy(e => e.Nombre).ToListAsync();
+                ViewData["Autores"] = await _context.Autors.OrderBy(a => a.Nombres).ThenBy(a => a.Apellidos).ToListAsync();
+                return View(model);
+            }
+
+            // Crear entidad Recurso
+            var recurso = new Recurso
+            {
+                ImagenRuta = string.IsNullOrWhiteSpace(model.ImagenRuta) ? null : model.ImagenRuta.Trim(),
+                Titulo = model.Titulo?.Trim() ?? string.Empty,
+                Descripcion = string.IsNullOrWhiteSpace(model.Descripcion) ? null : model.Descripcion.Trim(),
+                AnioPublicacion = model.AnioPublicacion,
+                Edicion = string.IsNullOrWhiteSpace(model.Edicion) ? null : model.Edicion.Trim(),
+                Cantidad = model.Cantidad,
+                IdTipoR = model.IdTipoR,
+                IdPais = model.IdPais,
+                Precio = model.Precio,
+                IdEdit = model.IdEdit
+            };
+
+            // Añadir recurso al contexto (todavía no SaveChanges)
+            _context.Recursos.Add(recurso);
+
+            // ---------- Manejo de Tags (PalabraClave) ----------
+            var tagsRaw = model.TagsCsv ?? string.Empty;
+            var tags = tagsRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
+                              .Select(t => t.Trim())
+                              .Where(t => !string.IsNullOrWhiteSpace(t))
+                              .Select(t => t.Length > 100 ? t.Substring(0, 100) : t)
+                              .Distinct(StringComparer.OrdinalIgnoreCase)
+                              .Take(8)
+                              .ToList();
+
+            // Actualizar PalabrasBusqueda opcionalmente
+            recurso.PalabrasBusqueda = tags.Any() ? string.Join(", ", tags) : null;
+
+            var normalized = tags.Select(t => t.ToLowerInvariant()).ToList();
+            var existingPalabras = new List<PalabraClave>();
+            if (normalized.Any())
+            {
+                existingPalabras = await _context.PalabraClaves
+                    .Where(p => normalized.Contains(p.Palabra.ToLower()))
+                    .ToListAsync();
+            }
+
+            foreach (var tag in tags)
+            {
+                var tagLower = tag.ToLowerInvariant();
+                var palabra = existingPalabras.FirstOrDefault(p => p.Palabra.ToLower() == tagLower);
+                if (palabra == null)
+                {
+                    palabra = new PalabraClave { Palabra = tag };
+                    _context.PalabraClaves.Add(palabra);
+                    existingPalabras.Add(palabra);
+                }
+
+                recurso.IdPalabraClaves.Add(palabra);
+            }
+            // ----------------------------------------------------
+
+            // ---------- Manejo de Autores seleccionados ----------
+            // El view debe mandar SelectedAuthorIds como lista (name="SelectedAuthorIds")
+            if (model.SelectedAuthorIds != null && model.SelectedAuthorIds.Any())
+            {
+                foreach (var idAutor in model.SelectedAuthorIds.Distinct())
+                {
+                    var ar = new AutoresRecurso { IdRec = recurso.IdRec, IdAutor = idAutor, EsPrincipal = false };
+                    // Nota: recurso.IdRec no estará asignado hasta SaveChanges, pero al agregar al contexto funciona si en la entidad la relación es agregada correctamente.
+                    // Añadimos la relación en la tabla intermedia directamente al contexto:
+                    _context.AutoresRecursos.Add(ar);
+                }
+            }
+            // ----------------------------------------------------------------
+
+            // Guardar todo
+            await _context.SaveChangesAsync();
+
+            // Redirigir a detalles del recurso creado
+            return RedirectToAction("Details", new { id = recurso.IdRec });
+        }
+
+
         // GET: Recurso/Edit/5
         public async Task<IActionResult> Edit(int id)
         {
