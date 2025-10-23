@@ -9,5 +9,5 @@ public partial class PalabraClave
 
     public string Palabra { get; set; } = null!;
 
-    public virtual ICollection<Material> IdMaterials { get; set; } = new List<Material>();
+    public virtual ICollection<Recurso> IdRecs { get; set; } = new List<Recurso>();
 }

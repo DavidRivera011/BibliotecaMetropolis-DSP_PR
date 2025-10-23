@@ -17,129 +17,160 @@ public partial class BibliotecaMetropolisContext : DbContext
 
     public virtual DbSet<Autor> Autors { get; set; }
 
+    public virtual DbSet<AutoresRecurso> AutoresRecursos { get; set; }
+
     public virtual DbSet<Editorial> Editorials { get; set; }
 
-    public virtual DbSet<Institucion> Institucions { get; set; }
-
-    public virtual DbSet<Material> Materials { get; set; }
+    public virtual DbSet<Pais> Pais { get; set; }
 
     public virtual DbSet<PalabraClave> PalabraClaves { get; set; }
 
+    public virtual DbSet<Recurso> Recursos { get; set; }
+
     public virtual DbSet<Rol> Rols { get; set; }
+
+    public virtual DbSet<TipoRecurso> TipoRecursos { get; set; }
 
     public virtual DbSet<Usuario> Usuarios { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("Server=ZHEIKPC\\SQLEXPRESS; Database=BibliotecaMetropolis; TrustServerCertificate=True; Trusted_Connection=True;");
+    {
+        if (!optionsBuilder.IsConfigured)
+        {
+            // Usar la cadena de conexión desde la configuración
+            optionsBuilder.UseSqlServer("Name=BibliotecaMetropolisConnection");
+        }
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Autor>(entity =>
         {
-            entity.HasKey(e => e.IdAutor).HasName("PK__Autor__DD33B0315A6E1918");
+            entity.HasKey(e => e.IdAutor).HasName("PK__Autor__DD33B0319C47E021");
 
             entity.ToTable("Autor");
 
-            entity.Property(e => e.Apellido).HasMaxLength(100);
-            entity.Property(e => e.Nacionalidad).HasMaxLength(50);
-            entity.Property(e => e.Nombre).HasMaxLength(100);
+            entity.Property(e => e.Apellidos).HasMaxLength(150);
+            entity.Property(e => e.Nombres).HasMaxLength(150);
+        });
+
+        modelBuilder.Entity<AutoresRecurso>(entity =>
+        {
+            entity.HasKey(e => new { e.IdRec, e.IdAutor }).HasName("PK__AutoresR__27997717988F4205");
+
+            entity.HasOne(d => d.IdAutorNavigation).WithMany(p => p.AutoresRecursos)
+                .HasForeignKey(d => d.IdAutor)
+                .HasConstraintName("FK_AR_Autor");
+
+            entity.HasOne(d => d.IdRecNavigation).WithMany(p => p.AutoresRecursos)
+                .HasForeignKey(d => d.IdRec)
+                .HasConstraintName("FK_AR_Recurso");
         });
 
         modelBuilder.Entity<Editorial>(entity =>
         {
-            entity.HasKey(e => e.IdEditorial).HasName("PK__Editoria__EF838671D9C47AE8");
+            entity.HasKey(e => e.IdEdit).HasName("PK__Editoria__0B864DEA8D023207");
 
             entity.ToTable("Editorial");
 
-            entity.Property(e => e.Ciudad).HasMaxLength(50);
-            entity.Property(e => e.Nombre).HasMaxLength(100);
-            entity.Property(e => e.Pais).HasMaxLength(50);
+            entity.Property(e => e.Descripcion).HasMaxLength(400);
+            entity.Property(e => e.Nombre).HasMaxLength(150);
         });
 
-        modelBuilder.Entity<Institucion>(entity =>
+        modelBuilder.Entity<Pais>(entity =>
         {
-            entity.HasKey(e => e.IdInstitucion).HasName("PK__Instituc__4231815ABBF78729");
-
-            entity.ToTable("Institucion");
+            entity.HasKey(e => e.IdPais).HasName("PK__Pais__FC850A7BC84A6725");
 
             entity.Property(e => e.Nombre).HasMaxLength(100);
-        });
-
-        modelBuilder.Entity<Material>(entity =>
-        {
-            entity.HasKey(e => e.IdMaterial).HasName("PK__Material__94356E58340566C9");
-
-            entity.ToTable("Material");
-
-            entity.Property(e => e.Precio).HasColumnType("decimal(10, 2)");
-            entity.Property(e => e.Tipo).HasMaxLength(50);
-            entity.Property(e => e.Titulo).HasMaxLength(150);
-
-            entity.HasOne(d => d.IdAutorNavigation).WithMany(p => p.Materials)
-                .HasForeignKey(d => d.IdAutor)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Material__IdAuto__4316F928");
-
-            entity.HasOne(d => d.IdEditorialNavigation).WithMany(p => p.Materials)
-                .HasForeignKey(d => d.IdEditorial)
-                .HasConstraintName("FK__Material__IdEdit__440B1D61");
-
-            entity.HasOne(d => d.IdInstitucionNavigation).WithMany(p => p.Materials)
-                .HasForeignKey(d => d.IdInstitucion)
-                .HasConstraintName("FK__Material__IdInst__44FF419A");
-
-            entity.HasMany(d => d.IdPalabraClaves).WithMany(p => p.IdMaterials)
-                .UsingEntity<Dictionary<string, object>>(
-                    "MaterialPalabraClave",
-                    r => r.HasOne<PalabraClave>().WithMany()
-                        .HasForeignKey("IdPalabraClave")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__MaterialP__IdPal__4AB81AF0"),
-                    l => l.HasOne<Material>().WithMany()
-                        .HasForeignKey("IdMaterial")
-                        .OnDelete(DeleteBehavior.ClientSetNull)
-                        .HasConstraintName("FK__MaterialP__IdMat__49C3F6B7"),
-                    j =>
-                    {
-                        j.HasKey("IdMaterial", "IdPalabraClave").HasName("PK__Material__D566D38B6A7ADB14");
-                        j.ToTable("MaterialPalabraClave");
-                    });
         });
 
         modelBuilder.Entity<PalabraClave>(entity =>
         {
-            entity.HasKey(e => e.IdPalabraClave).HasName("PK__PalabraC__153BDD356DE1A3C0");
+            entity.HasKey(e => e.IdPalabraClave).HasName("PK__PalabraC__153BDD35B626D9F5");
 
             entity.ToTable("PalabraClave");
 
-            entity.Property(e => e.Palabra).HasMaxLength(50);
+            entity.HasIndex(e => e.Palabra, "IX_PalabraClave_Palabra");
+
+            entity.Property(e => e.Palabra).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<Recurso>(entity =>
+        {
+            entity.HasKey(e => e.IdRec).HasName("PK__Recurso__2A4A4C14471EBBB1");
+
+            entity.ToTable("Recurso");
+
+            entity.HasIndex(e => e.Titulo, "IX_Recurso_Titulo");
+
+            entity.Property(e => e.Edicion).HasMaxLength(50);
+            entity.Property(e => e.PalabrasBusqueda).HasMaxLength(500);
+            entity.Property(e => e.Precio).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Titulo).HasMaxLength(250);
+
+            entity.HasOne(d => d.IdEditNavigation).WithMany(p => p.Recursos)
+                .HasForeignKey(d => d.IdEdit)
+                .HasConstraintName("FK_Recurso_Editorial");
+
+            entity.HasOne(d => d.IdPaisNavigation).WithMany(p => p.Recursos)
+                .HasForeignKey(d => d.IdPais)
+                .HasConstraintName("FK_Recurso_Pais");
+
+            entity.HasOne(d => d.IdTipoRNavigation).WithMany(p => p.Recursos)
+                .HasForeignKey(d => d.IdTipoR)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK_Recurso_TipoRecurso");
+
+            entity.HasMany(d => d.IdPalabraClaves).WithMany(p => p.IdRecs)
+                .UsingEntity<Dictionary<string, object>>(
+                    "RecursoPalabraClave",
+                    r => r.HasOne<PalabraClave>().WithMany()
+                        .HasForeignKey("IdPalabraClave")
+                        .HasConstraintName("FK_RPK_Palabra"),
+                    l => l.HasOne<Recurso>().WithMany()
+                        .HasForeignKey("IdRec")
+                        .HasConstraintName("FK_RPK_Recurso"),
+                    j =>
+                    {
+                        j.HasKey("IdRec", "IdPalabraClave").HasName("PK__RecursoP__6B19F1C7DEF0265A");
+                        j.ToTable("RecursoPalabraClave");
+                    });
         });
 
         modelBuilder.Entity<Rol>(entity =>
         {
-            entity.HasKey(e => e.IdRol).HasName("PK__Rol__2A49584CD781713D");
+            entity.HasKey(e => e.IdRol).HasName("PK__Rol__2A49584C65370112");
 
             entity.ToTable("Rol");
 
-            entity.Property(e => e.NombreRol).HasMaxLength(50);
+            entity.Property(e => e.NombreRol).HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<TipoRecurso>(entity =>
+        {
+            entity.HasKey(e => e.IdTipoR).HasName("PK__TipoRecu__5E1AF69EAA5A96DF");
+
+            entity.ToTable("TipoRecurso");
+
+            entity.Property(e => e.Descripcion).HasMaxLength(400);
+            entity.Property(e => e.Nombre).HasMaxLength(100);
         });
 
         modelBuilder.Entity<Usuario>(entity =>
         {
-            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuario__5B65BF97504AA7F1");
+            entity.HasKey(e => e.IdUsuario).HasName("PK__Usuario__5B65BF971513668F");
 
             entity.ToTable("Usuario");
 
             entity.Property(e => e.Activo).HasDefaultValue(true);
-            entity.Property(e => e.Contrasena).HasMaxLength(100);
-            entity.Property(e => e.NombreCompleto).HasMaxLength(100);
-            entity.Property(e => e.NombreUsuario).HasMaxLength(50);
+            entity.Property(e => e.Contrasena).HasMaxLength(200);
+            entity.Property(e => e.NombreCompleto).HasMaxLength(200);
+            entity.Property(e => e.NombreUsuario).HasMaxLength(100);
 
             entity.HasOne(d => d.IdRolNavigation).WithMany(p => p.Usuarios)
                 .HasForeignKey(d => d.IdRol)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Usuario__IdRol__3A81B327");
+                .HasConstraintName("FK_Usuario_Rol");
         });
 
         OnModelCreatingPartial(modelBuilder);

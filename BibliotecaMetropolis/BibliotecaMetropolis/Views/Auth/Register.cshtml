@@ -1,0 +1,59 @@
+﻿@model BibliotecaMetropolis.Models.RegisterViewModel
+
+@{
+    ViewData["Title"] = "Registro de usuario";
+    Layout = "_AuthLayout";
+}
+
+<link rel="stylesheet" href="~/css/site.css" />
+
+<div class="auth-page d-flex align-items-center justify-content-center">
+    <div class="auth-card shadow-sm">
+        <div class="auth-brand text-center mb-3">
+            <div class="brand-circle">BM</div>
+            <h3 class="mt-2">Crear cuenta</h3>
+            <p class="text-muted small">Registro de nuevo usuario</p>
+        </div>
+
+        <form asp-action="Register" method="post" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div class="mb-3">
+                <label asp-for="NombreUsuario" class="form-label">Nombre de usuario</label>
+                <input asp-for="NombreUsuario" class="form-control form-control-lg" />
+                <span asp-validation-for="NombreUsuario" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Contrasena" class="form-label">Contraseña</label>
+                <input asp-for="Contrasena" type="password" class="form-control form-control-lg" />
+                <span asp-validation-for="Contrasena" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="NombreCompleto" class="form-label">Nombre completo</label>
+                <input asp-for="NombreCompleto" class="form-control form-control-lg" />
+                <span asp-validation-for="NombreCompleto" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-success btn-block btn-lg w-100">Registrarse</button>
+        </form>
+
+        <div class="mt-3 text-center">
+            <a asp-action="Login" asp-controller="Auth">¿Ya tienes cuenta? Inicia sesión</a>
+        </div>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="text-danger mt-2 text-center small">
+                @Html.ValidationSummary()
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

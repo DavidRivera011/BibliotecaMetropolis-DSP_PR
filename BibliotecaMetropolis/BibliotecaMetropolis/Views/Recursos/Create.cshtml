@@ -1,0 +1,400 @@
+﻿@model BibliotecaMetropolis.Models.RecursoEditViewModel
+@{
+    ViewData["Title"] = "Crear Recurso";
+    Layout = "_Layout";
+
+    var tipos = ViewData["Tipos"] as List<BibliotecaMetropolis.Models.DB.TipoRecurso> ?? new();
+    var paises = ViewData["Paises"] as List<BibliotecaMetropolis.Models.DB.Pais> ?? new();
+    var editoriales = ViewData["Editoriales"] as List<BibliotecaMetropolis.Models.DB.Editorial> ?? new();
+    var autores = ViewData["Autores"] as List<BibliotecaMetropolis.Models.DB.Autor> ?? new();
+}
+
+<div class="card p-4">
+    <h4>@ViewData["Title"]</h4>
+
+    <form asp-action="Create" method="post">
+        @Html.AntiForgeryToken()
+
+        <div class="row">
+            <div class="col-md-5">
+                <div class="mb-3">
+                    <label class="form-label">Imagen (URL)</label>
+                    <input asp-for="ImagenRuta" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Título</label>
+                    <input asp-for="Titulo" class="form-control" />
+                    <span asp-validation-for="Titulo" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Autor(es)</label>
+
+                    <select id="selectAutores" name="SelectedAuthorIds" class="form-select mb-2">
+                        @foreach (var a in autores)
+                        {
+                            var fullname = (a.Nombres + " " + (a.Apellidos ?? "")).Trim();
+                            <option value="@a.IdAutor">@fullname</option>
+                        }
+                    </select>
+
+                    <div class="d-flex gap-2">
+                        <button id="openAutorModal" type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#autorModal">
+                            + Agregar autor
+                        </button>
+                        <a asp-controller="Autor" asp-action="Index" class="btn btn-light btn-sm">Gestionar autores</a>
+                    </div>
+                    <small class="text-muted d-block mt-2">Selecciona uno o más autores para este recurso (si aplica).</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Editorial</label>
+                    <div class="d-flex gap-2">
+                        <select id="selectEditorial" asp-for="IdEdit" class="form-select">
+                            <option value="">-- Sin editorial --</option>
+                            @foreach (var e in editoriales)
+                            {
+                                <option value="@e.IdEdit">@e.Nombre</option>
+                            }
+                        </select>
+
+                        <button id="openEditorialModal" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editorialModal">
+                            + Editorial
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-7">
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    <textarea asp-for="Descripcion" class="form-control" rows="6"></textarea>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <label class="form-label">Año</label>
+                        <input asp-for="AnioPublicacion" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Edición</label>
+                        <input asp-for="Edicion" class="form-control" />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Cantidad</label>
+                        <input asp-for="Cantidad" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Tipo de recurso</label>
+                        <select asp-for="IdTipoR" class="form-select">
+                            @foreach (var t in tipos)
+                            {
+                                <option value="@t.IdTipoR">@t.Nombre</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">País</label>
+                        <select asp-for="IdPais" class="form-select">
+                            <option value="">-- Sin país --</option>
+                            @foreach (var p in paises)
+                            {
+                                <option value="@p.IdPais">@p.Nombre</option>
+                            }
+                        </select>
+                        <small class="form-text text-muted">Selecciona el país desde la lista.</small>
+                    </div>
+
+                    <div class="col-md-4 mt-2">
+                        <label class="form-label">Precio</label>
+                        <input asp-for="Precio" class="form-control" />
+                    </div>
+
+                    <!-- Tags widget -->
+                    <div class="col-12 mt-3">
+                        <label class="form-label">Etiquetas / Palabras clave</label>
+
+                        <div id="tagsContainer" class="mb-2"></div>
+
+                        <div class="d-flex gap-2 mb-2">
+                            <input id="tagInput" type="text" class="form-control" placeholder="Escribe una etiqueta y presiona Enter" maxlength="100" />
+                            <button id="addTagBtn" type="button" class="btn btn-outline-secondary">Agregar</button>
+                        </div>
+
+                        <small class="form-text text-muted">Máximo 8 etiquetas. Pulsa la × en una etiqueta para eliminarla.</small>
+
+                        <input type="hidden" id="TagsCsv" name="TagsCsv" value="" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn" style="background:#ff8a00;color:white;">Crear recurso</button>
+            <a asp-action="Index" asp-controller="Home" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+
+<!-- Reutiliza los mismos modales de Autor y Editorial que ya implementaste en Edit.cshtml -->
+<!-- Modal Autor -->
+<div class="modal fade" id="autorModal" tabindex="-1" aria-labelledby="autorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="autorForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="autorModalLabel">Agregar Autor</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="autorAlert" class="alert d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombres</label>
+                        <input id="autorNombres" type="text" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Apellidos</label>
+                        <input id="autorApellidos" type="text" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="autorSaveBtn" type="submit" class="btn btn-primary">Guardar autor</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Editorial -->
+<div class="modal fade" id="editorialModal" tabindex="-1" aria-labelledby="editorialModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="editorialForm">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editorialModalLabel">Agregar Editorial</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="editorialAlert" class="alert d-none" role="alert"></div>
+                    <div class="mb-3">
+                        <label class="form-label">Nombre</label>
+                        <input id="editorialNombre" type="text" class="form-control" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Descripción</label>
+                        <textarea id="editorialDescripcion" class="form-control"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="editorialSaveBtn" type="submit" class="btn btn-primary">Guardar editorial</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @await Html.PartialAsync("_ValidationScriptsPartial")
+
+    <script>
+        (function () {
+            // Tags widget (igual que en Edit)
+            const maxTags = 8;
+            const tagsContainer = document.getElementById('tagsContainer');
+            const tagInput = document.getElementById('tagInput');
+            const tagsCsv = document.getElementById('TagsCsv');
+            const addTagBtn = document.getElementById('addTagBtn');
+
+            function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+
+            function updateHidden() {
+                const chips = tagsContainer.querySelectorAll('.tag-chip');
+                const tags = Array.from(chips).map(c => c.dataset.value);
+                tagsCsv.value = tags.join(',');
+            }
+
+            function createChip(tag) {
+                const span = document.createElement('span');
+                span.className = 'tag-chip';
+                span.dataset.value = tag;
+                span.innerHTML = escapeHtml(tag) + ' <button type="button" class="btn-remove-tag" aria-label="Eliminar">×</button>';
+                return span;
+            }
+
+            function addTag(tag) {
+                if (!tag) return;
+                tag = tag.trim();
+                if (!tag) return;
+
+                const existing = Array.from(tagsContainer.querySelectorAll('.tag-chip')).map(c => c.dataset.value.toLowerCase());
+                if (existing.includes(tag.toLowerCase())) {
+                    tagInput.value = '';
+                    return;
+                }
+
+                const chips = tagsContainer.querySelectorAll('.tag-chip');
+                if (chips.length >= maxTags) {
+                    alert('Máximo ' + maxTags + ' etiquetas.');
+                    return;
+                }
+
+                const chip = createChip(tag);
+                tagsContainer.appendChild(chip);
+                updateHidden();
+                tagInput.value = '';
+                tagInput.focus();
+            }
+
+            tagsContainer.addEventListener('click', function (e) {
+                if (e.target && (e.target.matches('.btn-remove-tag') || e.target.closest('.btn-remove-tag'))) {
+                    const btn = e.target.closest('.btn-remove-tag');
+                    const chip = btn.closest('.tag-chip');
+                    if (chip) { chip.remove(); updateHidden(); }
+                }
+            });
+
+            tagInput.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput.value); }
+            });
+
+            addTagBtn.addEventListener('click', function () { addTag(tagInput.value); });
+
+            // Inicial: si quieres precargar tags (en create por defecto no hay)
+            updateHidden();
+
+            /* ------------------ MODALES: Autor / Editorial ------------------ */
+            function showAlert(container, msg, type = 'danger') {
+                container.classList.remove('d-none','alert-success','alert-danger','alert-warning');
+                container.classList.add('alert-' + type);
+                container.textContent = msg;
+            }
+            function clearAlert(container) {
+                container.classList.add('d-none');
+                container.textContent = '';
+                container.classList.remove('alert-success','alert-danger','alert-warning');
+            }
+
+            // Autor modal POST a /api/Autor (tu controller existente)
+            const autorForm = document.getElementById('autorForm');
+            if (autorForm) {
+                autorForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const nombres = document.getElementById('autorNombres').value.trim();
+                    const apellidos = document.getElementById('autorApellidos').value.trim();
+                    const alertBox = document.getElementById('autorAlert');
+
+                    clearAlert(alertBox);
+                    if (!nombres) { showAlert(alertBox, 'El nombre del autor es obligatorio.', 'warning'); return; }
+
+                    try {
+                        const resp = await fetch('/api/Autor', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ Nombres: nombres, Apellidos: apellidos })
+                        });
+                        const data = await resp.json();
+                        if (!resp.ok) { showAlert(alertBox, data?.error || 'Error al guardar autor.', 'danger'); return; }
+
+                        // Añadir al select de autores y seleccionarlo
+                        const select = document.getElementById('selectAutores');
+                        if (select) {
+                            const opt = document.createElement('option');
+                            opt.value = data.id;
+                            opt.text = data.nombre || (nombres + (apellidos ? (' ' + apellidos) : ''));
+                            opt.selected = true;
+                            select.appendChild(opt);
+                        }
+
+                        // cerrar modal
+                        const modalEl = document.getElementById('autorModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        modal.hide();
+
+                        // limpiar inputs
+                        document.getElementById('autorNombres').value = '';
+                        document.getElementById('autorApellidos').value = '';
+                    } catch (err) {
+                        showAlert(alertBox, 'Error de conexión', 'danger');
+                    }
+                });
+            }
+
+            // Editorial modal POST a /api/Editorial (tu controller existente)
+            const editorialForm = document.getElementById('editorialForm');
+            if (editorialForm) {
+                editorialForm.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const nombre = document.getElementById('editorialNombre').value.trim();
+                    const descripcion = document.getElementById('editorialDescripcion').value.trim();
+                    const alertBox = document.getElementById('editorialAlert');
+                    clearAlert(alertBox);
+                    if (!nombre) { showAlert(alertBox, 'El nombre de la editorial es obligatorio.', 'warning'); return; }
+
+                    try {
+                        const resp = await fetch('/api/Editorial', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ Nombre: nombre, Descripcion: descripcion })
+                        });
+
+                        const data = await resp.json();
+                        if (!resp.ok) { showAlert(alertBox, data?.error || 'Error al guardar editorial.', 'danger'); return; }
+
+                        const selectEd = document.getElementById('selectEditorial');
+                        if (selectEd) {
+                            const opt = document.createElement('option');
+                            opt.value = data.id;
+                            opt.text = data.nombre;
+                            opt.selected = true;
+                            selectEd.appendChild(opt);
+                        }
+
+                        // cerrar modal y limpiar
+                        const modalEl = document.getElementById('editorialModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                        modal.hide();
+                        document.getElementById('editorialNombre').value = '';
+                        document.getElementById('editorialDescripcion').value = '';
+                    } catch (err) {
+                        showAlert(alertBox, 'Error de conexión', 'danger');
+                    }
+                });
+            }
+        })();
+    </script>
+
+    <style>
+        .tag-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            margin-right: 8px;
+            margin-bottom: 8px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 999px;
+            font-size: .95rem;
+            color: #333;
+        }
+
+            .tag-chip .btn-remove-tag {
+                background: transparent;
+                border: none;
+                font-weight: 700;
+                cursor: pointer;
+                color: #666;
+                padding: 0 4px;
+                line-height: 1;
+            }
+
+                .tag-chip .btn-remove-tag:hover {
+                    color: #111;
+                }
+    </style>
+}

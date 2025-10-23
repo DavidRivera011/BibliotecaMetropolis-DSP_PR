@@ -3,13 +3,11 @@ using System.Collections.Generic;
 
 namespace BibliotecaMetropolis.Models.DB;
 
-public partial class Editorial
+public partial class Pais
 {
-    public int IdEdit { get; set; }
+    public int IdPais { get; set; }
 
     public string Nombre { get; set; } = null!;
-
-    public string? Descripcion { get; set; }
 
     public virtual ICollection<Recurso> Recursos { get; set; } = new List<Recurso>();
 }
