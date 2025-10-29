@@ -1,0 +1,47 @@
+﻿@model IEnumerable<BibliotecaMetropolis.Models.DB.Editorial>
+
+@{
+    ViewData["Title"] = "Editoriales";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Editoriales</h4>
+    <a asp-action="Create" class="btn" style="background:#ff8a00;color:#fff;">+ Nueva editorial</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-light">No hay editoriales registradas.</div>
+}
+else
+{
+    <div class="card p-3" style="box-shadow:var(--card-shadow-soft);background:white;">
+        <table class="table align-middle">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th class="text-end">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model)
+                {
+                    <tr>
+                        <td>@e.Nombre</td>
+                        <td>@(string.IsNullOrWhiteSpace(e.Descripcion) ? "—" : e.Descripcion)</td>
+                        <td class="text-end">
+                            <a asp-action="Edit" asp-route-id="@e.IdEdit" class="btn btn-sm btn-outline-primary me-1">Editar</a>
+                            <form asp-action="DeleteConfirmed" asp-route-id="@e.IdEdit" method="post"
+                                  style="display:inline;" onsubmit="return confirm('¿Eliminar esta editorial?');">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
