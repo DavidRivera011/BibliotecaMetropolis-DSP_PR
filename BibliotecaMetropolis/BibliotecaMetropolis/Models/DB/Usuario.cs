@@ -9,7 +9,7 @@ public partial class Usuario
 
     public string NombreUsuario { get; set; } = null!;
 
-    public string Contrasena { get; set; } = null!; //vamos a hashear las contraseñas en la lógica con BCrypt porque no pueden estar en texto plano
+    public string Contrasena { get; set; } = null!;
 
     public string? NombreCompleto { get; set; }
 

@@ -2,6 +2,12 @@
 @{
     ViewData["Title"] = "Detalle del recurso";
     Layout = "_Layout";
+
+    var usuario = Context.Session.GetString("NombreUsuario");
+    var rol = Context.Session.GetString("Rol");
+    var token = Context.Session.GetString("JWToken");
+
+    bool isAdmin = !string.IsNullOrEmpty(rol) && rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
 }
 
 <div class="row g-4">
@@ -63,25 +69,23 @@
                     <div class="p-2" style="background:#fafafa;border-radius:6px;">@Model.PalabrasBusqueda</div>
                 </div>
             </div>
+            @if (isAdmin)
+            {
+                <div class="mt-4 d-flex gap-2">
+                    <a asp-action="Edit" asp-controller="Recursos" asp-route-id="@Model.IdRec" class="btn" style="background:#ff8a00;color:white;">Editar</a>
 
-            <div class="mt-4 d-flex gap-2">
-                <a asp-action="Edit" asp-controller="Recursos" asp-route-id="@Model.IdRec" class="btn" style="background:#ff8a00;color:white;">Editar</a>
+                    <form asp-action="Delete" asp-controller="Recursos" asp-route-id="@Model.IdRec" method="post" onsubmit="return confirm('¿Eliminar recurso? Esta acción no se puede deshacer.');">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-danger" @(Model.Cantidad > 0 ? "disabled" : "")>Eliminar</button>
+                    </form>
 
-                <form asp-action="Delete" asp-controller="Recursos" asp-route-id="@Model.IdRec" method="post" onsubmit="return confirm('¿Eliminar recurso? Esta acción no se puede deshacer.');">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-danger" @(Model.Cantidad > 0 ? "disabled" : "")>Eliminar</button>
-                </form>
-
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-warning ms-3">@TempData["Error"]</div>
-                }
-            </div>
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-warning ms-3">@TempData["Error"]</div>
+                    }
+                </div>
+            }
+            
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-    </script>
-}

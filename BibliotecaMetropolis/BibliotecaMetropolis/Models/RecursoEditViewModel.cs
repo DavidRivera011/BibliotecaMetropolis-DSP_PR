@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 
@@ -24,40 +24,18 @@ namespace BibliotecaMetropolis.Models
         public int IdTipoR { get; set; }
         public int? IdPais { get; set; }
 
-        /// <summary>
-        /// Editorial seleccionada (nullable).
-        /// </summary>
         public int? IdEdit { get; set; }
 
-        /// <summary>
-        /// CSV enviado desde la vista (campo oculto). Cada tag separado por coma.
-        /// Validado con IValidatableObject además de este atributo.
-        /// </summary>
         [StringLength(800, ErrorMessage = "TagsCsv demasiado largo.")]
         public string? TagsCsv { get; set; }
 
-        /// <summary>
-        /// para mostrar las tags actuales en la UI (GET)
-        /// </summary>
         public List<string> Tags { get; set; } = new List<string>();
 
-        /// <summary>
-        /// Ids de autores seleccionados en el formulario (multi-select).
-        /// </summary>
         public List<int> SelectedAuthorIds { get; set; } = new List<int>();
 
-        // ----- Configuración de límites -----
         private const int MaxTags = 8;
         private const int MaxTagLength = 100;
 
-        /// <summary>
-        /// Helper que parsea TagsCsv (o Tags si lo prefieres) en una lista limpia y normalizada.
-        /// - Trim
-        /// - elimina entradas vacías
-        /// - truncates cada tag a MaxTagLength
-        /// - distinct case-insensitive
-        /// - toma hasta MaxTags
-        /// </summary>
         public List<string> ParsedTags()
         {
             IEnumerable<string> source;
@@ -87,10 +65,6 @@ namespace BibliotecaMetropolis.Models
             return list;
         }
 
-        // Validaciones personalizadas:
-        // - máximo 8 tags
-        // - cada tag máximo 100 caracteres
-        // - SelectedAuthorIds no contiene ids negativos
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             var results = new List<ValidationResult>();
@@ -110,12 +84,29 @@ namespace BibliotecaMetropolis.Models
                 }
             }
 
-            // Validación sencilla sobre SelectedAuthorIds (no negativos).
-            if (SelectedAuthorIds != null && SelectedAuthorIds.Any(id => id < 0))
+            var normalizedAuthors = (SelectedAuthorIds ?? new List<int>())
+                .Where(id => id > 0)
+                .ToList();
+
+            // Límite máximo 3 autores
+            if (normalizedAuthors.Count > 3)
             {
-                results.Add(new ValidationResult("Lista de autores contiene un id no válido.", new[] { nameof(SelectedAuthorIds) }));
+                results.Add(new ValidationResult("Sólo se permiten hasta 3 autores (1 principal y 2 opcionales).", new[] { nameof(SelectedAuthorIds) }));
             }
 
+            // Debe existir al menos un autor (el principal)
+            if (!normalizedAuthors.Any())
+            {
+                results.Add(new ValidationResult("Debes seleccionar al menos un autor (principal).", new[] { nameof(SelectedAuthorIds) }));
+            }
+
+            // Duplicados
+            if (normalizedAuthors.Distinct().Count() != normalizedAuthors.Count)
+            {
+                results.Add(new ValidationResult("No puedes seleccionar el mismo autor en varias casillas.", new[] { nameof(SelectedAuthorIds) }));
+            }
+
+            SelectedAuthorIds = normalizedAuthors;
 
             return results;
         }

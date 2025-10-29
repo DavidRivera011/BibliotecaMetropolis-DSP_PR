@@ -1,0 +1,57 @@
+﻿/* recursos-create.css - estilos para chips tags y autores */
+.tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 999px;
+    font-size: .95rem;
+    color: #333;
+}
+
+    .tag-chip .btn-remove-tag {
+        background: transparent;
+        border: none;
+        font-weight: 700;
+        cursor: pointer;
+        color: #666;
+        padding: 0 4px;
+        line-height: 1;
+    }
+
+        .tag-chip .btn-remove-tag:hover {
+            color: #111;
+        }
+
+/* estilos simples para chips de autores */
+#selectedAuthorsContainer .author-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    background: #f1f7ff;
+    border: 1px solid #d7e6ff;
+    border-radius: 999px;
+    font-size: .95rem;
+    color: #0b3b70;
+}
+
+#selectedAuthorsContainer .btn-remove-author {
+    background: transparent;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+    color: #0b3b70;
+    padding: 0 6px;
+    line-height: 1;
+}
+
+    #selectedAuthorsContainer .btn-remove-author:hover {
+        color: #06213c;
+    }

@@ -28,7 +28,7 @@ namespace BibliotecaMetropolis.Controllers
             _config = config;
         }
 
-        // LOGIN -------
+        // LOGIN
 
         [HttpGet]
         public IActionResult Login()
@@ -108,61 +108,5 @@ namespace BibliotecaMetropolis.Controllers
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
-
-
-
-
-        // ------- REGISTER -------
-
-        [HttpGet]
-        public IActionResult Register()
-        {
-            return View(new RegisterViewModel());
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterViewModel model)
-        {
-            if (!ModelState.IsValid)
-                return View(model);
-
-            // Normalizar nombre de usuario
-            var nombreUsuario = model.NombreUsuario.Trim().ToUpperInvariant();
-
-            // Validar si ya existe
-            bool existe = await _context.Usuarios
-                .AnyAsync(u => u.NombreUsuario.ToUpper() == nombreUsuario);
-
-            if (existe)
-            {
-                ModelState.AddModelError(nameof(model.NombreUsuario), "El nombre de usuario ya está en uso.");
-                return View(model);
-            }
-
-
-            // Aqui forzamos el rol de usuario normal y el activo para que no lo pueda cambiar el usuario en web
-            model.IdRol = 2;
-            model.Activo = true;
-
-            // Crear entidad Usuario
-            var usuario = new Usuario
-            {
-                NombreUsuario = model.NombreUsuario.Trim(),
-                Contrasena = BCrypt.Net.BCrypt.HashPassword(model.Contrasena),
-                NombreCompleto = model.NombreCompleto.Trim(),
-                Activo = model.Activo,
-                IdRol = model.IdRol
-            };
-
-            _context.Usuarios.Add(usuario);
-            await _context.SaveChangesAsync();
-
-            return RedirectToAction("Login", "Auth");
-        }
-
-
-
     }
 }
