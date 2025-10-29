@@ -1,6 +1,7 @@
 ﻿using BibliotecaMetropolis.Models.DB;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using System.Linq;
 
 /*Integrantes:
  Castellón Hernández, Emily Alessandra
@@ -12,9 +13,7 @@ using System.Threading.Tasks;
 
 namespace BibliotecaMetropolis.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class EditorialController : ControllerBase
+    public class EditorialController : Controller
     {
         private readonly BibliotecaMetropolisContext _context;
 
@@ -23,29 +22,88 @@ namespace BibliotecaMetropolis.Controllers
             _context = context;
         }
 
-        public class EditorialCreateDto
+        // GET: Editorial
+        public async Task<IActionResult> Index()
         {
-            public string Nombre { get; set; } = string.Empty;
-            public string? Descripcion { get; set; }
+            var list = await Task.FromResult(_context.Editorials.OrderBy(e => e.Nombre).ToList());
+            return View(list);
         }
 
-        // POST: api/Editorial
+        // GET: Editorial/Create
+        public IActionResult Create() => View();
+
+        // POST: Editorial/Create
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] EditorialCreateDto dto)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Editorial dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Nombre))
-                return BadRequest(new { error = "El nombre de la editorial es obligatorio." });
+            if (!ModelState.IsValid) return View(dto);
 
             var editorial = new Editorial
             {
-                Nombre = dto.Nombre.Trim(),
+                Nombre = dto.Nombre?.Trim() ?? string.Empty,
                 Descripcion = string.IsNullOrWhiteSpace(dto.Descripcion) ? null : dto.Descripcion.Trim()
             };
 
             _context.Editorials.Add(editorial);
             await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
 
-            return Ok(new { id = editorial.IdEdit, nombre = editorial.Nombre });
+        // GET: Editorial/Edit/5
+        public async Task<IActionResult> Edit(int id)
+        {
+            var editorial = await Task.FromResult(_context.Editorials.Find(id));
+            if (editorial == null) return NotFound();
+            return View(editorial);
+        }
+
+        // POST: Editorial/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Editorial dto)
+        {
+            if (id != dto.IdEdit) return BadRequest();
+            if (!ModelState.IsValid) return View(dto);
+
+            var editorial = _context.Editorials.Find(id);
+            if (editorial == null) return NotFound();
+
+            editorial.Nombre = dto.Nombre?.Trim() ?? string.Empty;
+            editorial.Descripcion = string.IsNullOrWhiteSpace(dto.Descripcion) ? null : dto.Descripcion.Trim();
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Editorial/Delete/5
+        public async Task<IActionResult> Delete(int id)
+        {
+            var editorial = await Task.FromResult(_context.Editorials.Find(id));
+            if (editorial == null) return NotFound();
+            return View(editorial);
+        }
+
+        // POST: Editorial/DeleteConfirmed/5
+        [HttpPost, ActionName("DeleteConfirmed")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var editorial = _context.Editorials.Find(id);
+            if (editorial != null)
+            {
+                _context.Editorials.Remove(editorial);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
+        }
+
+        // GET: Editorial/Details/5
+        public async Task<IActionResult> Details(int id)
+        {
+            var editorial = await Task.FromResult(_context.Editorials.Find(id));
+            if (editorial == null) return NotFound();
+            return View(editorial);
         }
     }
 }

@@ -1,8 +1,11 @@
 ﻿@using Microsoft.AspNetCore.Http
+@using System
 @{
     var usuario = Context.Session.GetString("NombreUsuario");
     var rol = Context.Session.GetString("Rol");
     var token = Context.Session.GetString("JWToken");
+
+    bool isAdmin = !string.IsNullOrEmpty(rol) && rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
 }
 
 <!DOCTYPE html>
@@ -29,8 +32,19 @@
 
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a></li>
-                    <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+
+                    @if (isAdmin)
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Usuarios" asp-action="Index">Usuarios</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Autor" asp-action="Index">Autores</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Editorial" asp-action="Index">Editoriales</a></li>
+                        <li class="nav-item"><a class="nav-link" asp-controller="Recursos" asp-action="Index">Recursos</a></li>
+                    }
+                    else
+                    {
+                        <li class="nav-item"><a class="nav-link" asp-controller="Recursos" asp-action="Index">Recursos</a></li>
+                    }
                 </ul>
 
                 <ul class="navbar-nav">
@@ -47,6 +61,7 @@
                                     <strong>@(rol ?? "Sin rol")</strong>
                                 </li>
                                 <li><hr class="dropdown-divider" /></li>
+
                                 <li><a class="dropdown-item" asp-controller="Auth" asp-action="Logout">Cerrar sesión</a></li>
                             </ul>
                         </li>

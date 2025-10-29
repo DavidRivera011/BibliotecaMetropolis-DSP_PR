@@ -3,20 +3,25 @@
 @{
     ViewData["Title"] = "Inicio";
     Layout = "_Layout";
-    // pequeño helper local para la inicial (seguro frente a null/empty)
-    string usuarioNombreSafe = string.IsNullOrWhiteSpace(Model.UsuarioNombre) ? string.Empty : Model.UsuarioNombre.Trim();
-    string inicial = !string.IsNullOrEmpty(usuarioNombreSafe) ? usuarioNombreSafe.Substring(0, 1).ToUpperInvariant() : "U";
+
+    var usuario = Context.Session.GetString("NombreUsuario");
+    var rol = Context.Session.GetString("Rol");
+    var token = Context.Session.GetString("JWToken");
+
+    bool isAdmin = !string.IsNullOrEmpty(rol) && rol.Equals("Administrador", StringComparison.OrdinalIgnoreCase);
 }
+
+
 
 <div class="top-row d-flex align-items-center gap-3 mb-4">
     <div class="user-card d-flex align-items-center gap-3">
         <div class="user-avatar rounded-circle d-flex align-items-center justify-content-center"
              style="width:64px;height:64px;background:#ff8a00;color:#fff;font-weight:700;">
-            @inicial
+            MB
         </div>
         <div>
-            <div style="font-weight:700; font-size:1rem;">@(Model.UsuarioNombre ?? "Invitado")</div>
-            <div style="color:#666; font-size:0.9rem;">@(Model.Rol ?? "Sin rol")</div>
+            <div style="font-weight:700; font-size:1rem;">@(usuario ?? "Invitado")</div>
+            <div style="color:#666; font-size:0.9rem;">@(rol ?? "Sin rol")</div>
         </div>
     </div>
 
@@ -38,10 +43,12 @@
     </form>
 </div>
 
-<div class="mb-3">
-    <a asp-controller="Recursos" asp-action="Create" class="btn btn-primary">Crear recurso</a>
-</div>
-
+@if (isAdmin)
+{
+    <div class="mb-3">
+        <a asp-controller="Recursos" asp-action="Create" class="btn btn-primary">Crear recurso</a>
+    </div>
+}
 
 @if (Model.Recursos == null || !Model.Recursos.Any())
 {
