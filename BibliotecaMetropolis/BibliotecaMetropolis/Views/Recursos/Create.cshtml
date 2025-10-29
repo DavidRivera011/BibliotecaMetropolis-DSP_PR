@@ -2,17 +2,23 @@
 @{
     ViewData["Title"] = "Crear Recurso";
     Layout = "_Layout";
-
     var tipos = ViewData["Tipos"] as List<BibliotecaMetropolis.Models.DB.TipoRecurso> ?? new();
     var paises = ViewData["Paises"] as List<BibliotecaMetropolis.Models.DB.Pais> ?? new();
     var editoriales = ViewData["Editoriales"] as List<BibliotecaMetropolis.Models.DB.Editorial> ?? new();
     var autores = ViewData["Autores"] as List<BibliotecaMetropolis.Models.DB.Autor> ?? new();
 }
 
-<link rel="stylesheet" href="~/css/recursos-create.css" />
-
 <div class="card p-4">
     <h4>@ViewData["Title"]</h4>
+
+    @if (!string.IsNullOrEmpty(TempData["Error"] as string))
+    {
+        <div class="alert alert-danger">@Html.Raw(TempData["Error"] as string)</div>
+    }
+    @if (!string.IsNullOrEmpty(TempData["Message"] as string))
+    {
+        <div class="alert alert-success">@TempData["Message"]</div>
+    }
 
     <form id="recursoForm" asp-action="Create" method="post">
         @Html.AntiForgeryToken()
@@ -26,55 +32,85 @@
 
                 <div class="mb-3">
                     <label class="form-label">Título</label>
-                    <input asp-for="Titulo" class="form-control" />
+                    <input asp-for="Titulo" class="form-control" required />
                     <span asp-validation-for="Titulo" class="text-danger"></span>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Autor(es)</label>
+                    <label class="form-label">Autor(es) <span class="text-danger">*</span></label>
 
-                    <div class="gap-2 mb-2">
-                        <select id="selectAutores" class="form-select">
-                            <option value="" selected disabled>Seleccionar autor</option>
+                    @{
+                        var sel0 = Model?.SelectedAuthorIds != null && Model.SelectedAuthorIds.Count > 0 ? Model.SelectedAuthorIds.ElementAtOrDefault(0) : 0;
+                        var sel1 = Model?.SelectedAuthorIds != null && Model.SelectedAuthorIds.Count > 1 ? Model.SelectedAuthorIds.ElementAtOrDefault(1) : 0;
+                        var sel2 = Model?.SelectedAuthorIds != null && Model.SelectedAuthorIds.Count > 2 ? Model.SelectedAuthorIds.ElementAtOrDefault(2) : 0;
+                    }
+
+                    <div class="author-row mb-2">
+                        <select name="SelectedAuthorIds" class="form-select" required>
+                            <option value="0" disabled selected>Seleccionar autor</option>
                             @foreach (var a in autores)
                             {
                                 var fullname = (a.Nombres + " " + (a.Apellidos ?? "")).Trim();
-                                <option value="@a.IdAutor">@fullname</option>
+                                if (a.IdAutor == sel0)
+                                {
+                                    <option value="@a.IdAutor" selected="selected">@fullname</option>
+                                }
+                                else
+                                {
+                                    <option value="@a.IdAutor">@fullname</option>
+                                }
                             }
                         </select>
-
-                        <button id="btnAddAutor" type="button" class="btn btn-outline-primary" title="Agregar autor seleccionado" style="margin-top: 10px;">
-                            Agregar
-                        </button>
-
-                        <button id="openAutorModal" type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#autorModal" style="margin-top: 10px;">
-                            + Nuevo autor
-                        </button>
                     </div>
 
-                    <small class="text-muted d-block mb-2">Selecciona uno o varios autores. Debe añadirse al menos uno.</small>
+                    <div class="author-row mb-2">
+                        <select name="SelectedAuthorIds" class="form-select">
+                            <option value="0" selected>-- Seleccionar (opcional) --</option>
+                            @foreach (var a in autores)
+                            {
+                                var fullname = (a.Nombres + " " + (a.Apellidos ?? "")).Trim();
+                                if (a.IdAutor == sel1)
+                                {
+                                    <option value="@a.IdAutor" selected="selected">@fullname</option>
+                                }
+                                else
+                                {
+                                    <option value="@a.IdAutor">@fullname</option>
+                                }
+                            }
+                        </select>
+                    </div>
 
-                    <!-- contenedor de chips con autores seleccionados -->
-                    <div id="selectedAuthorsContainer" class="mb-2"></div>
+                    <div class="author-row mb-2">
+                        <select name="SelectedAuthorIds" class="form-select">
+                            <option value="0" selected>-- Seleccionar (opcional) --</option>
+                            @foreach (var a in autores)
+                            {
+                                var fullname = (a.Nombres + " " + (a.Apellidos ?? "")).Trim();
+                                if (a.IdAutor == sel2)
+                                {
+                                    <option value="@a.IdAutor" selected="selected">@fullname</option>
+                                }
+                                else
+                                {
+                                    <option value="@a.IdAutor">@fullname</option>
+                                }
+                            }
+                        </select>
+                    </div>
 
-                    <!-- alerta de validación en cliente -->
-                    <div id="authorsValidation" class="text-danger mb-2 d-none">Debes añadir al menos un autor.</div>
                 </div>
 
                 <div class="mb-3">
                     <label class="form-label">Editorial</label>
-                    <div class=" gap-2">
-                        <select id="selectEditorial" asp-for="IdEdit" class="form-select">
-                            <option value="" selected>Sin editorial</option>
+                    <div class="d-flex gap-2">
+                        <select asp-for="IdEdit" class="form-select">
+                            <option value="">Sin editorial</option>
                             @foreach (var e in editoriales)
                             {
                                 <option value="@e.IdEdit">@e.Nombre</option>
                             }
                         </select>
-
-                        <button id="openEditorialModal" type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#editorialModal" style="margin-top: 10px;">
-                            + Editorial
-                        </button>
                     </div>
                 </div>
             </div>
@@ -118,7 +154,6 @@
                                 <option value="@p.IdPais">@p.Nombre</option>
                             }
                         </select>
-                        <small class="form-text text-muted">Selecciona el país desde la lista.</small>
                     </div>
 
                     <div class="col-md-4 mt-2">
@@ -126,21 +161,40 @@
                         <input asp-for="Precio" class="form-control" />
                     </div>
 
-                    <!-- Tags widget -->
                     <div class="col-12 mt-3">
-                        <label class="form-label">Etiquetas / Palabras clave</label>
+                        <label class="form-label">Palabras clave</label>
 
-                        <div id="tagsContainer" class="mb-2"></div>
+                        <div class="row g-2">
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (obligatoria)" maxlength="100" required />
+                            </div>
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (opcional)" maxlength="100" />
+                            </div>
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (opcional)" maxlength="100" />
+                            </div>
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (opcional)" maxlength="100" />
+                            </div>
 
-                        <div class="d-flex gap-2 mb-2">
-                            <input id="tagInput" type="text" class="form-control" placeholder="Escribe una etiqueta y presiona Enter" maxlength="100" />
-                            <button id="addTagBtn" type="button" class="btn btn-outline-secondary">Agregar</button>
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (opcional)" maxlength="100" />
+                            </div>
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (opcional)" maxlength="100" />
+                            </div>
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (opcional)" maxlength="100" />
+                            </div>
+                            <div class="col-3">
+                                <input name="Keywords" type="text" class="form-control form-control-sm" placeholder="Palabra (opcional)" maxlength="100" />
+                            </div>
                         </div>
 
-                        <small class="form-text text-muted">Máximo 8 etiquetas. Pulsa la × en una etiqueta para eliminarla.</small>
-
-                        <input type="hidden" id="TagsCsv" name="TagsCsv" value="" />
+                        <small class="form-text text-muted d-block mt-2">Máximo 8 palabras. El primer campo es obligatorio. Entrada compacta para ahorrar espacio.</small>
                     </div>
+
                 </div>
             </div>
         </div>
@@ -151,63 +205,3 @@
         </div>
     </form>
 </div>
-
-<!-- Modal Autor -->
-<div class="modal fade" id="autorModal" tabindex="-1" aria-labelledby="autorModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="autorForm">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="autorModalLabel">Agregar Autor</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="autorAlert" class="alert d-none" role="alert"></div>
-                    <div class="mb-3">
-                        <label class="form-label">Nombres</label>
-                        <input id="autorNombres" type="text" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Apellidos</label>
-                        <input id="autorApellidos" type="text" class="form-control" />
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button id="autorSaveBtn" type="submit" class="btn btn-primary">Guardar autor</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Editorial -->
-<div class="modal fade" id="editorialModal" tabindex="-1" aria-labelledby="editorialModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <form id="editorialForm">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editorialModalLabel">Agregar Editorial</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="editorialAlert" class="alert d-none" role="alert"></div>
-                    <div class="mb-3">
-                        <label class="form-label">Nombre</label>
-                        <input id="editorialNombre" type="text" class="form-control" required />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Descripción</label>
-                        <textarea id="editorialDescripcion" class="form-control"></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                    <button id="editorialSaveBtn" type="submit" class="btn btn-primary">Guardar editorial</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<script src="~/js/recursos-create.js"></script>
