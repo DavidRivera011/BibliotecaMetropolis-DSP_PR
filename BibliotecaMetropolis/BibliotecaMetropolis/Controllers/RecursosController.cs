@@ -1,20 +1,32 @@
-﻿using BibliotecaMetropolis.Filtros;
 using BibliotecaMetropolis.Models;
 using BibliotecaMetropolis.Models.DB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+
+/*Integrantes:
+ Castellón Hernández, Emily Alessandra
+ López Avelar, Vladimir Alexander
+ Martínez Nolasco, Julio César
+ Peñate Valle, William Eliseo
+ Rivera Linares, Julio David
+ */
 
 namespace BibliotecaMetropolis.Controllers
 {
-    public class RecursosController : Controller
+    public class AuthController : Controller
     {
         private readonly BibliotecaMetropolisContext _context;
+        private readonly IConfiguration _config;
 
         // GET 
         public RecursosController(BibliotecaMetropolisContext context)
         {
             _context = context;
+            _config = config;
         }
 
         // GET /Details/{id}
@@ -62,179 +74,54 @@ namespace BibliotecaMetropolis.Controllers
             return View(vm);
         }
 
-        [RoleAuthorize("Administrador")]
-        public async Task<IActionResult> Create()
+        [HttpGet]
+        public IActionResult Login()
         {
-            var vm = new RecursoEditViewModel { };
-
-            ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
-            ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
-            ViewData["Editoriales"] = await _context.Editorials.OrderBy(e => e.Nombre).ToListAsync();
-            ViewData["Autores"] = await _context.Autors.OrderBy(a => a.Nombres).ThenBy(a => a.Apellidos).ToListAsync();
-
-            return View(vm);
+            return View();
         }
 
         // POST CREATE
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [RoleAuthorize("Administrador")]
-        public async Task<IActionResult> Create(RecursoEditViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model)
         {
-            var selectedAuthorIds = model.SelectedAuthorIds ?? new List<int>();
-            if ((!selectedAuthorIds.Any()) && Request.HasFormContentType && Request.Form.ContainsKey("SelectedAuthorIds"))
-            {
-                var vals = Request.Form["SelectedAuthorIds"].Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-                foreach (var s in vals)
-                {
-                    if (int.TryParse(s, out var id)) selectedAuthorIds.Add(id);
-                }
-            }
-
-            var orderedSelected = selectedAuthorIds.Where(id => id > 0).ToList();
-            if (!orderedSelected.Any())
-                ModelState.AddModelError("", "Debes seleccionar al menos un autor (principal).");
-            if (orderedSelected.Distinct().Count() != orderedSelected.Count)
-                ModelState.AddModelError("", "No puedes seleccionar el mismo autor en varias casillas.");
-
-            var keywords = new List<string>();
-            if (Request.HasFormContentType && Request.Form.ContainsKey("Keywords"))
-            {
-                keywords = Request.Form["Keywords"]
-                    .Select(k => (k ?? "").Trim())
-                    .Where(k => !string.IsNullOrEmpty(k))
-                    .Select(k => k.Length > 100 ? k.Substring(0, 100) : k)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Take(8)
-                    .ToList();
-            }
-
-            if (!string.IsNullOrWhiteSpace(model.TagsCsv))
-            {
-                var fromCsv = model.TagsCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim())
-                    .Where(t => !string.IsNullOrWhiteSpace(t))
-                    .Select(t => t.Length > 100 ? t.Substring(0, 100) : t)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Take(8)
-                    .ToList();
-                if (fromCsv.Any()) keywords = fromCsv;
-            }
-
-            model.SelectedAuthorIds = orderedSelected;
-            model.Tags = keywords;
-
             if (!ModelState.IsValid)
+                return View(model);
+
+            var user = await _context.Usuarios
+                .Include(u => u.IdRolNavigation)
+                .FirstOrDefaultAsync(u => u.NombreUsuario == model.NombreUsuario && u.Activo);
+
+            if (user == null)
             {
-                var errors = ModelState
-                    .Where(kvp => kvp.Value != null && kvp.Value.Errors != null && kvp.Value.Errors.Any())
-                    .SelectMany(kvp => kvp.Value!.Errors.Select(e => e.ErrorMessage))
-                    .ToList();
-
-                TempData["Error"] = string.Join(" - ", errors);
-
-                ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
-                ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
-                ViewData["Editoriales"] = await _context.Editorials.OrderBy(e => e.Nombre).ToListAsync();
-                ViewData["Autores"] = await _context.Autors.OrderBy(a => a.Nombres).ThenBy(a => a.Apellidos).ToListAsync();
+                ModelState.AddModelError("", "Usuario no encontrado o inactivo.");
                 return View(model);
             }
 
-            var recurso = new Recurso
+            // BCrypt para verificar la contraseña (HASH)
+            bool validPassword = BCrypt.Net.BCrypt.Verify(model.Contrasena, user.Contrasena);
+            if (!validPassword)
             {
-                ImagenRuta = string.IsNullOrWhiteSpace(model.ImagenRuta) ? null : model.ImagenRuta.Trim(),
-                Titulo = model.Titulo?.Trim() ?? string.Empty,
-                Descripcion = string.IsNullOrWhiteSpace(model.Descripcion) ? null : model.Descripcion.Trim(),
-                AnioPublicacion = model.AnioPublicacion,
-                Edicion = string.IsNullOrWhiteSpace(model.Edicion) ? null : model.Edicion.Trim(),
-                Cantidad = model.Cantidad,
-                IdTipoR = model.IdTipoR,
-                IdPais = model.IdPais,
-                Precio = model.Precio,
-                IdEdit = model.IdEdit
-            };
-
-            _context.Recursos.Add(recurso);
-            await _context.SaveChangesAsync();
-
-            var tags = keywords;
-            recurso.PalabrasBusqueda = tags.Any() ? string.Join(", ", tags) : null;
-
-            var normalized = tags.Select(t => t.ToLowerInvariant()).ToList();
-            var existingPalabras = new List<PalabraClave>();
-            if (normalized.Any())
-            {
-                existingPalabras = await _context.PalabraClaves
-                    .Where(p => normalized.Contains(p.Palabra.ToLower()))
-                    .ToListAsync();
+                ModelState.AddModelError("", "Contraseña incorrecta.");
+                return View(model);
             }
 
-            foreach (var tag in tags)
-            {
-                var tagLower = tag.ToLowerInvariant();
-                var palabra = existingPalabras.FirstOrDefault(p => p.Palabra.ToLower() == tagLower);
-                if (palabra == null)
-                {
-                    palabra = new PalabraClave { Palabra = tag };
-                    _context.PalabraClaves.Add(palabra);
-                    existingPalabras.Add(palabra);
-                }
-                recurso.IdPalabraClaves.Add(palabra);
-            }
+            // Generar JWT
+            var token = GenerarJwt(user);
 
-            for (int i = 0; i < orderedSelected.Count; i++)
-            {
-                var idAutor = orderedSelected[i];
-                _context.AutoresRecursos.Add(new AutoresRecurso
-                {
-                    IdRec = recurso.IdRec,
-                    IdAutor = idAutor,
-                    EsPrincipal = (i == 0)
-                });
-            }
+            // Guardar token en Session junto a usuario y rol
+            HttpContext.Session.SetString("JWToken", token);
+            HttpContext.Session.SetString("NombreUsuario", user.NombreUsuario);
+            HttpContext.Session.SetString("Rol", user.IdRolNavigation?.NombreRol ?? string.Empty);
 
-            await _context.SaveChangesAsync();
-            return RedirectToAction("Details", new { id = recurso.IdRec });
+            return RedirectToAction("Index", "Home");
         }
         // GET EDIT
         [RoleAuthorize("Administrador")]
         public async Task<IActionResult> Edit(int id)
         {
-            var recurso = await _context.Recursos
-                .Include(r => r.IdPalabraClaves)
-                .FirstOrDefaultAsync(r => r.IdRec == id);
-
-            if (recurso == null) return NotFound();
-
-            var autoresRelacionados = await _context.AutoresRecursos
-                .Where(ar => ar.IdRec == id)
-                .OrderByDescending(ar => ar.EsPrincipal)
-                .Select(ar => ar.IdAutor)
-                .ToListAsync();
-
-            var vm = new RecursoEditViewModel
-            {
-                IdRec = recurso.IdRec,
-                ImagenRuta = recurso.ImagenRuta,
-                Titulo = recurso.Titulo,
-                Descripcion = recurso.Descripcion,
-                AnioPublicacion = recurso.AnioPublicacion,
-                Edicion = recurso.Edicion,
-                Cantidad = recurso.Cantidad,
-                IdTipoR = recurso.IdTipoR,
-                IdPais = recurso.IdPais,
-                Precio = recurso.Precio,
-                PalabrasBusqueda = recurso.PalabrasBusqueda,
-                IdEdit = recurso.IdEdit,
-                Tags = recurso.IdPalabraClaves?.Select(pk => pk.Palabra).ToList() ?? new List<string>(),
-                SelectedAuthorIds = autoresRelacionados ?? new List<int>()
-            };
-
-            ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
-            ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
-            ViewData["Editoriales"] = await _context.Editorials.OrderBy(e => e.Nombre).ToListAsync();
-            ViewData["Autores"] = await _context.Autors.OrderBy(a => a.Nombres).ThenBy(a => a.Apellidos).ToListAsync();
-            return View(vm);
+            HttpContext.Session.Clear();
+            return RedirectToAction("Login");
         }
 
 
@@ -243,50 +130,17 @@ namespace BibliotecaMetropolis.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(RecursoEditViewModel model)
         {
-            var selected = model.SelectedAuthorIds ?? new List<int>();
-            if ((!selected.Any()) && Request.HasFormContentType && Request.Form.ContainsKey("SelectedAuthorIds"))
-            {
-                var vals = Request.Form["SelectedAuthorIds"].Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
-                foreach (var s in vals)
-                {
-                    if (int.TryParse(s, out var id)) selected.Add(id);
-                }
-            }
+            var jwtSettings = _config.GetSection("Jwt");
+            var keyString = jwtSettings["Key"];
+            if (string.IsNullOrEmpty(keyString))
+                throw new InvalidOperationException("La clave JWT no está configurada.");
 
-            var orderedSelected = selected.Where(id => id > 0).ToList();
-            if (!orderedSelected.Any())
-                ModelState.AddModelError("", "Debes seleccionar al menos un autor (principal).");
-            if (orderedSelected.Distinct().Count() != orderedSelected.Count)
-                ModelState.AddModelError("", "No puedes seleccionar el mismo autor en varias casillas.");
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
-            var keywords = new List<string>();
-            if (Request.HasFormContentType && Request.Form.ContainsKey("Keywords"))
-            {
-                keywords = Request.Form["Keywords"]
-                    .Select(k => (k ?? "").Trim())
-                    .Where(k => !string.IsNullOrEmpty(k))
-                    .Select(k => k.Length > 100 ? k.Substring(0, 100) : k)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Take(8)
-                    .ToList();
-            }
+            var nombreRol = usuario.IdRolNavigation?.NombreRol ?? string.Empty;
 
-            if (!string.IsNullOrWhiteSpace(model.TagsCsv))
-            {
-                var fromCsv = model.TagsCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim())
-                    .Where(t => !string.IsNullOrWhiteSpace(t))
-                    .Select(t => t.Length > 100 ? t.Substring(0, 100) : t)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Take(8)
-                    .ToList();
-                if (fromCsv.Any()) keywords = fromCsv;
-            }
-
-            model.SelectedAuthorIds = orderedSelected;
-            model.Tags = keywords;
-
-            if (!ModelState.IsValid)
+            var claims = new[]
             {
                 var errors = ModelState
                     .Where(kvp => kvp.Value != null && kvp.Value.Errors != null && kvp.Value.Errors.Any())
@@ -390,14 +244,15 @@ namespace BibliotecaMetropolis.Controllers
                 return RedirectToAction(nameof(Details), new { id });
             }
 
-            _context.Recursos.Remove(recurso);
-            await _context.SaveChangesAsync();
+            var token = new JwtSecurityToken(
+                issuer: jwtSettings["Issuer"],
+                audience: jwtSettings["Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(2),
+                signingCredentials: creds
+            );
 
-            TempData["Message"] = "Recurso eliminado correctamente.";
-            return RedirectToAction("Index", "Home");
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
-        private bool RecursoExists(int id)
-            => _context.Recursos.Any(e => e.IdRec == id);
     }
 }
