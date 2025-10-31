@@ -33,56 +33,11 @@ namespace BibliotecaMetropolis.Models
 
         public List<int> SelectedAuthorIds { get; set; } = new List<int>();
 
-        private const int MaxTags = 8;
-        private const int MaxTagLength = 100;
-
-        public List<string> ParsedTags()
-        {
-            IEnumerable<string> source;
-
-            if (!string.IsNullOrWhiteSpace(TagsCsv))
-            {
-                source = TagsCsv!
-                    .Split(new[] { ',' }, System.StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim());
-            }
-            else if (Tags != null && Tags.Any())
-            {
-                source = Tags.Select(t => (t ?? string.Empty).Trim());
-            }
-            else
-            {
-                source = Enumerable.Empty<string>();
-            }
-
-            var list = source
-                .Where(t => !string.IsNullOrWhiteSpace(t))
-                .Select(t => t.Length > MaxTagLength ? t.Substring(0, MaxTagLength) : t)
-                .Distinct(System.StringComparer.OrdinalIgnoreCase)
-                .Take(MaxTags)
-                .ToList();
-
-            return list;
-        }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             var results = new List<ValidationResult>();
 
-            var tagsList = ParsedTags();
-
-            if (tagsList.Count > MaxTags)
-            {
-                results.Add(new ValidationResult($"Máximo {MaxTags} etiquetas.", new[] { nameof(TagsCsv) }));
-            }
-
-            foreach (var t in tagsList)
-            {
-                if (t.Length > MaxTagLength)
-                {
-                    results.Add(new ValidationResult($"La etiqueta '{t}' no puede exceder {MaxTagLength} caracteres.", new[] { nameof(TagsCsv) }));
-                }
-            }
 
             var normalizedAuthors = (SelectedAuthorIds ?? new List<int>())
                 .Where(id => id > 0)

@@ -6,14 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-
-/*Integrantes:
- Castellón Hernández, Emily Alessandra
- López Avelar, Vladimir Alexander
- Martínez Nolasco, Julio César
- Peñate Valle, William Eliseo
- Rivera Linares, Julio David
- */
+using Microsoft.Extensions.Configuration;
 
 namespace BibliotecaMetropolis.Controllers
 {
@@ -24,17 +17,17 @@ namespace BibliotecaMetropolis.Controllers
 
         public AuthController(BibliotecaMetropolisContext context, IConfiguration config)
         {
-            _context = context;
-            _config = config;
+            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _config = config ?? throw new ArgumentNullException(nameof(config));
         }
-
-        // LOGIN
 
         [HttpGet]
         public IActionResult Login()
         {
             return View();
         }
+
+        // LOGIN
 
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -53,8 +46,24 @@ namespace BibliotecaMetropolis.Controllers
                 return View(model);
             }
 
+            if (string.IsNullOrEmpty(user.Contrasena))
+            {
+                ModelState.AddModelError("", "Contraseña no configurada para el usuario.");
+                return View(model);
+            }
+
             // BCrypt para verificar la contraseña (HASH)
-            bool validPassword = BCrypt.Net.BCrypt.Verify(model.Contrasena, user.Contrasena);
+            bool validPassword = false;
+            try
+            {
+                validPassword = BCrypt.Net.BCrypt.Verify(model.Contrasena, user.Contrasena);
+            }
+            catch
+            {
+                // en caso de hash inválido o formato inesperado
+                validPassword = false;
+            }
+
             if (!validPassword)
             {
                 ModelState.AddModelError("", "Contraseña incorrecta.");
@@ -66,12 +75,13 @@ namespace BibliotecaMetropolis.Controllers
 
             // Guardar token en Session junto a usuario y rol
             HttpContext.Session.SetString("JWToken", token);
-            HttpContext.Session.SetString("NombreUsuario", user.NombreUsuario);
+            HttpContext.Session.SetString("NombreUsuario", user.NombreUsuario ?? string.Empty);
             HttpContext.Session.SetString("Rol", user.IdRolNavigation?.NombreRol ?? string.Empty);
 
             return RedirectToAction("Index", "Home");
         }
 
+        // LOGOUT
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();
@@ -93,9 +103,9 @@ namespace BibliotecaMetropolis.Controllers
 
             var claims = new[]
             {
-                new Claim(JwtRegisteredClaimNames.Sub, usuario.NombreUsuario),
-                new Claim("rol", nombreRol),
-                new Claim("id", usuario.IdUsuario.ToString())
+                new Claim(ClaimTypes.Name, usuario.NombreUsuario ?? string.Empty),
+                new Claim(ClaimTypes.NameIdentifier, usuario.IdUsuario.ToString()),
+                new Claim(ClaimTypes.Role, nombreRol)
             };
 
             var token = new JwtSecurityToken(
