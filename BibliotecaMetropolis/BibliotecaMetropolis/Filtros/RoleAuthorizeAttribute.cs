@@ -9,7 +9,7 @@ namespace BibliotecaMetropolis.Filtros
 {
     // Roles accesos
     // [RoleAuthorize("Administrador")]
-    // [RoleAuthorize("Administrador","Usuario")]
+    // [RoleAuthorize("Administrador","Vendedor")]
     public class RoleAuthorizeAttribute : Attribute, IAsyncActionFilter
     {
         private readonly string[] _roles;

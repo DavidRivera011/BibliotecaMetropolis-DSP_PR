@@ -8,9 +8,7 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// ----------------------
 // Services
-// ----------------------
 builder.Services.AddControllersWithViews();
 
 // DbContext
@@ -20,9 +18,7 @@ builder.Services.AddDbContext<BibliotecaMetropolisContext>(options =>
 // required for session to work
 builder.Services.AddDistributedMemoryCache();
 
-// ----------------------
 // Persistir claves de DataProtection para que las cookies de sesión sobrevivan reinicios
-// ----------------------
 var keysFolder = Path.Combine(builder.Environment.ContentRootPath, "DataProtectionKeys");
 Directory.CreateDirectory(keysFolder);
 
@@ -40,9 +36,7 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// ----------------------
 // JWT configuration
-// ----------------------
 var jwtSettings = builder.Configuration.GetSection("Jwt");
 var keyString = jwtSettings["Key"];
 if (string.IsNullOrEmpty(keyString))

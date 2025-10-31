@@ -1,0 +1,45 @@
+﻿@model BibliotecaMetropolis.Models.DB.Autor
+
+@{
+    ViewData["Title"] = "Editar Autor";
+    Layout = "_Layout";
+}
+
+<div class="card p-4">
+    <h4>@ViewData["Title"]</h4>
+
+    @if (!string.IsNullOrEmpty(TempData["Error"] as string))
+    {
+        <div class="alert alert-danger">@Html.Raw(TempData["Error"] as string)</div>
+    }
+    @if (!string.IsNullOrEmpty(TempData["Message"] as string))
+    {
+        <div class="alert alert-success">@TempData["Message"]</div>
+    }
+
+    <form asp-action="Edit" method="post" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="IdAutor" />
+
+        <div class="mb-3">
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Nombres</label>
+            <input asp-for="Nombres" class="form-control" />
+            <span asp-validation-for="Nombres" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Apellidos</label>
+            <input asp-for="Apellidos" class="form-control" />
+            <span asp-validation-for="Apellidos" class="text-danger"></span>
+        </div>
+
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn" style="background:#ff8a00;color:white;">Guardar cambios</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>

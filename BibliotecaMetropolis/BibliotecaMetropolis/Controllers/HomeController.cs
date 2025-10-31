@@ -62,8 +62,7 @@ namespace BibliotecaMetropolis.Controllers
             if (!string.IsNullOrWhiteSpace(q))
             {
                 var term = q.Trim();
-                query = query.Where(r =>
-                    r.Titulo.Contains(term) ||
+                query = query.Where(r => r.Titulo.Contains(term) ||
                     (r.PalabrasBusqueda != null && r.PalabrasBusqueda.Contains(term)) ||
                     (r.Descripcion != null && r.Descripcion.Contains(term)) ||
                     (r.IdEditNavigation != null && r.IdEditNavigation.Nombre.Contains(term))

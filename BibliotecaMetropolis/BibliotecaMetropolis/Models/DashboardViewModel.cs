@@ -7,7 +7,7 @@ namespace BibliotecaMetropolis.Models
         public int Id { get; set; }
         public string Titulo { get; set; } = string.Empty;
         public string? ImagenRuta { get; set; }
-        public string Autor { get; set; } = "Desconocido";
+        public string Autor { get; set; } = string.Empty;
         public string? Editorial { get; set; }
     }
 
