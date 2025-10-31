@@ -25,44 +25,32 @@ namespace BibliotecaMetropolis.Controllers
                 .Include(r => r.IdPaisNavigation)
                 .Include(r => r.IdTipoRNavigation)
                 .Include(r => r.IdPalabraClaves)
+                .Include(r => r.AutoresRecursos)
+                    .ThenInclude(ar => ar.IdAutorNavigation)
                 .FirstOrDefaultAsync(r => r.IdRec == id);
 
             if (recurso == null) return NotFound();
 
-            var autores = await _context.AutoresRecursos
-                .Include(ar => ar.IdAutorNavigation)
-                .Where(ar => ar.IdRec == id)
+            var autoresRelacionados = recurso.AutoresRecursos
                 .OrderByDescending(ar => ar.EsPrincipal)
-                .ToListAsync();
+                .Select(ar => $"{ar.IdAutorNavigation?.Nombres} {ar.IdAutorNavigation?.Apellidos}".Trim())
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .ToList();
 
-            var autoresStr = autores.Any()
-                ? string.Join(", ", autores.Select(a => $"{a.IdAutorNavigation?.Nombres} {a.IdAutorNavigation?.Apellidos}".Trim()))
+            var autoresStr = autoresRelacionados.Any()
+                ? string.Join(", ", autoresRelacionados)
                 : "Desconocido";
 
-            var vm = new RecursoDetailsViewModel
-            {
-                IdRec = recurso.IdRec,
-                Titulo = recurso.Titulo,
-                ImagenRuta = recurso.ImagenRuta,
-                Autores = autoresStr,
-                Editorial = recurso.IdEditNavigation?.Nombre,
-                AnioPublicacion = recurso.AnioPublicacion,
-                Edicion = recurso.Edicion,
-                Cantidad = recurso.Cantidad ?? 0,
-                TipoRecurso = recurso.IdTipoRNavigation?.Nombre,
-                Pais = recurso.IdPaisNavigation?.Nombre,
-                Precio = recurso.Precio,
-                PalabrasBusqueda = recurso.PalabrasBusqueda,
-                Descripcion = recurso.Descripcion
-            };
+            ViewBag.Autores = autoresStr;
 
-            return View(vm);
+            return View(recurso);
         }
+
 
         [RoleAuthorize("Administrador")]
         public async Task<IActionResult> Create()
         {
-            var vm = new RecursoEditViewModel { };
+            var vm = new Recurso { };
 
             ViewData["Tipos"] = await _context.TipoRecursos.OrderBy(t => t.Nombre).ToListAsync();
             ViewData["Paises"] = await _context.Pais.OrderBy(p => p.Nombre).ToListAsync();
@@ -75,7 +63,7 @@ namespace BibliotecaMetropolis.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize("Administrador")]
-        public async Task<IActionResult> Create(RecursoEditViewModel model)
+        public async Task<IActionResult> Create(Recurso model)
         {
             var selectedAuthorIds = model.SelectedAuthorIds ?? new List<int>();
             if ((!selectedAuthorIds.Any()) && Request.HasFormContentType && Request.Form.ContainsKey("SelectedAuthorIds"))
@@ -103,18 +91,6 @@ namespace BibliotecaMetropolis.Controllers
                     .Distinct(StringComparer.OrdinalIgnoreCase)
                     .Take(8)
                     .ToList();
-            }
-
-            if (!string.IsNullOrWhiteSpace(model.TagsCsv))
-            {
-                var fromCsv = model.TagsCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim())
-                    .Where(t => !string.IsNullOrWhiteSpace(t))
-                    .Select(t => t.Length > 100 ? t.Substring(0, 100) : t)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Take(8)
-                    .ToList();
-                if (fromCsv.Any()) keywords = fromCsv;
             }
 
             model.SelectedAuthorIds = orderedSelected;
@@ -208,7 +184,7 @@ namespace BibliotecaMetropolis.Controllers
                 .Select(ar => ar.IdAutor)
                 .ToListAsync();
 
-            var vm = new RecursoEditViewModel
+            var vm = new Recurso
             {
                 IdRec = recurso.IdRec,
                 ImagenRuta = recurso.ImagenRuta,
@@ -235,7 +211,7 @@ namespace BibliotecaMetropolis.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(RecursoEditViewModel model)
+        public async Task<IActionResult> Edit(Recurso model)
         {
             var selected = model.SelectedAuthorIds ?? new List<int>();
             if ((!selected.Any()) && Request.HasFormContentType && Request.Form.ContainsKey("SelectedAuthorIds"))
@@ -265,20 +241,14 @@ namespace BibliotecaMetropolis.Controllers
                     .ToList();
             }
 
-            if (!string.IsNullOrWhiteSpace(model.TagsCsv))
-            {
-                var fromCsv = model.TagsCsv.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(t => t.Trim())
-                    .Where(t => !string.IsNullOrWhiteSpace(t))
-                    .Select(t => t.Length > 100 ? t.Substring(0, 100) : t)
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .Take(8)
-                    .ToList();
-                if (fromCsv.Any()) keywords = fromCsv;
-            }
-
             model.SelectedAuthorIds = orderedSelected;
             model.Tags = keywords;
+
+            ModelState.Remove(nameof(Recurso.IdTipoRNavigation));
+            ModelState.Remove(nameof(Recurso.IdEditNavigation));
+            ModelState.Remove(nameof(Recurso.IdPaisNavigation));
+            ModelState.Remove(nameof(Recurso.IdPalabraClaves));
+            ModelState.Remove(nameof(Recurso.AutoresRecursos));
 
             if (!ModelState.IsValid)
             {

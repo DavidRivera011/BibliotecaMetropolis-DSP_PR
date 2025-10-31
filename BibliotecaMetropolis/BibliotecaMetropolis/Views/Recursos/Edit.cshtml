@@ -1,4 +1,4 @@
-﻿@model BibliotecaMetropolis.Models.RecursoEditViewModel
+﻿@model BibliotecaMetropolis.Models.DB.Recurso
 @{
     ViewData["Title"] = "Editar Recurso";
     Layout = "_Layout";
@@ -151,7 +151,7 @@
                     <div class="col-md-6">
                         <label class="form-label">País</label>
                         <select asp-for="IdPais" class="form-select">
-                            <option value="">-- Sin país --</option>
+                            <option value="">Sin país</option>
                             @foreach (var p in paises)
                             {
                                 <option value="@p.IdPais" selected="@(Model?.IdPais.HasValue == true && Model.IdPais.Value == p.IdPais ? "selected" : null)">@p.Nombre</option>

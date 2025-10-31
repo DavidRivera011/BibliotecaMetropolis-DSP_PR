@@ -31,7 +31,7 @@ namespace BibliotecaMetropolis.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(Usuario model)
         {
             if (!ModelState.IsValid)
                 return View(model);

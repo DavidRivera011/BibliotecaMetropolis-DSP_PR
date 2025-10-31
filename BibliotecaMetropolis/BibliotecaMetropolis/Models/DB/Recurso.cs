@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BibliotecaMetropolis.Models.DB
 {
@@ -13,6 +15,8 @@ namespace BibliotecaMetropolis.Models.DB
 
         public int? IdEdit { get; set; }
 
+        [Required]
+        [StringLength(250)]
         public string Titulo { get; set; } = null!;
 
         public int? AnioPublicacion { get; set; }
@@ -38,5 +42,11 @@ namespace BibliotecaMetropolis.Models.DB
         public virtual TipoRecurso IdTipoRNavigation { get; set; } = null!;
 
         public virtual ICollection<PalabraClave> IdPalabraClaves { get; set; } = new List<PalabraClave>();
+
+        [NotMapped]
+        public List<int> SelectedAuthorIds { get; set; } = new List<int>();
+
+        [NotMapped]
+        public List<string> Tags { get; set; } = new List<string>();
     }
 }
