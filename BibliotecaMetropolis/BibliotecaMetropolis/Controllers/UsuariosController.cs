@@ -59,14 +59,6 @@ namespace BibliotecaMetropolis.Controllers
             if (string.IsNullOrWhiteSpace(Contrasena) || Contrasena.Length < 6)
                 ModelState.AddModelError(nameof(Contrasena), "La contraseña es obligatoria (mínimo 6 caracteres).");
 
-            if (IdRol <= 0)
-                ModelState.AddModelError(nameof(IdRol), "Selecciona un rol válido.");
-            else
-            {
-                var rolExists = await _context.Rols.AnyAsync(r => r.IdRol == IdRol);
-                if (!rolExists) ModelState.AddModelError(nameof(IdRol), "Rol inválido.");
-            }
-
             if (!string.IsNullOrWhiteSpace(NombreUsuario))
             {
                 var exists = await _context.Usuarios.AnyAsync(u => u.NombreUsuario == NombreUsuario);
@@ -191,9 +183,6 @@ namespace BibliotecaMetropolis.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-
-
-
         // POST: Usuarios/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -205,7 +194,7 @@ namespace BibliotecaMetropolis.Controllers
             _context.Usuarios.Remove(usuario);
             await _context.SaveChangesAsync();
             TempData["Message"] = "Usuario eliminado correctamente.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction("Index", "Usuarios");
         }
     }
 }

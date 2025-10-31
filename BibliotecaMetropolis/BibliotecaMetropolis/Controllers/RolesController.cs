@@ -1,4 +1,5 @@
-﻿using BibliotecaMetropolis.Models.DB;
+﻿using BibliotecaMetropolis.Filtros;
+using BibliotecaMetropolis.Models.DB;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
@@ -14,6 +15,7 @@ using System.Threading.Tasks;
 
 namespace BibliotecaMetropolis.Controllers
 {
+    [RoleAuthorize("Administrador")]
     public class RolesController : Controller
     {
         private readonly BibliotecaMetropolisContext _context;
@@ -68,7 +70,7 @@ namespace BibliotecaMetropolis.Controllers
             if (linked)
             {
                 TempData["Error"] = "No se puede eliminar el rol porque tiene usuarios asignados.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction("Index", "Usuarios");
             }
 
             _context.Rols.Remove(rol);

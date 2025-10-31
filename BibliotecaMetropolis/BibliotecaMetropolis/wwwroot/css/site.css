@@ -228,3 +228,21 @@ body {
 .text-muted.small {
     font-size: .85rem;
 }
+
+/* quita bullet y margen del validation summary */
+.validation-summary ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+/* hace el texto un poco más visible y sin punto */
+.validation-summary {
+    color: #d9534f; /* o el rojo que uses */
+    font-size: 0.95rem;
+}
+
+    /* si quieres que el mensaje aparezca más sutil y sin punto rojo extra, quita markers */
+    .validation-summary li::marker {
+        display: none;
+    }
