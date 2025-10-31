@@ -11,11 +11,14 @@ namespace BibliotecaMetropolis.Controllers
     {
         private readonly BibliotecaMetropolisContext _context;
 
+        // GET 
         public RecursosController(BibliotecaMetropolisContext context)
         {
             _context = context;
         }
 
+        // GET /Details/{id}
+        [RoleAuthorize("Administrador")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -72,6 +75,7 @@ namespace BibliotecaMetropolis.Controllers
             return View(vm);
         }
 
+        // POST CREATE
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize("Administrador")]
@@ -192,7 +196,7 @@ namespace BibliotecaMetropolis.Controllers
             await _context.SaveChangesAsync();
             return RedirectToAction("Details", new { id = recurso.IdRec });
         }
-
+        // GET EDIT
         [RoleAuthorize("Administrador")]
         public async Task<IActionResult> Edit(int id)
         {
@@ -233,6 +237,8 @@ namespace BibliotecaMetropolis.Controllers
             return View(vm);
         }
 
+
+        // POST EDIT
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(RecursoEditViewModel model)
@@ -369,6 +375,7 @@ namespace BibliotecaMetropolis.Controllers
             return RedirectToAction("Details", new { id = model.IdRec });
         }
 
+        // POST DELETE
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RoleAuthorize("Administrador")]

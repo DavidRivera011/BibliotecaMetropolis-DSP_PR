@@ -1,7 +1,8 @@
-﻿using BibliotecaMetropolis.Models.DB;
+﻿using BibliotecaMetropolis.Filtros;
+using BibliotecaMetropolis.Models.DB;
 using Microsoft.AspNetCore.Mvc;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 
 /*Integrantes:
  Castellón Hernández, Emily Alessandra
@@ -13,6 +14,7 @@ using System.Linq;
 
 namespace BibliotecaMetropolis.Controllers
 {
+    [RoleAuthorize("Administrador")]
     public class EditorialController : Controller
     {
         private readonly BibliotecaMetropolisContext _context;

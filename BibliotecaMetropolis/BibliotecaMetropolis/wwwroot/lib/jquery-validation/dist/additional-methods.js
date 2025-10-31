@@ -175,7 +175,7 @@ $.validator.addMethod( "bic", function( value, element ) {
 
 /*
  * Código de identificación fiscal ( CIF ) is the tax identification code for Spanish legal entities
- * Further rules can be found in Spanish on http://es.wikipedia.org/wiki/C%C3%B3digo_de_identificaci%C3%B3n_fiscal
+ * Further rules can be found in Spanish on http://es.wikipedia.org/wiki/C%C3%B3digo_de_Identificaci%C3%B3n_fiscal
  *
  * Spanish CIF structure:
  *
@@ -270,9 +270,9 @@ $.validator.addMethod( "cifES", function( value, element ) {
 	}
 
 	all_sum = even_sum + odd_sum;
-	control_digit = ( 10 - ( all_sum ).toString().substr( -1 ) ).toString();
+	control_digit = ( 10 - ( all_sum ).toString().slice( -1 ) ).toString();
 	control_digit = parseInt( control_digit, 10 ) > 9 ? "0" : control_digit;
-	control_letter = "JABCDEFGHI".substr( control_digit, 1 ).toString();
+	control_letter = "JABCDEFGHI".slice( control_digit, 1 ).toString();
 
 	// Control must be a digit
 	if ( letter.match( /[ABEH]/ ) ) {

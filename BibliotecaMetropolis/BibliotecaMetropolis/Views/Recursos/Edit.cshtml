@@ -111,7 +111,7 @@
                             <option value="" selected disabled>Sin editorial</option>
                             @foreach (var e in editoriales)
                             {
-                                <option value="@e.IdEdit" selected="@(Model.IdEdit == e.IdEdit ? "selected" : null)">@e.Nombre</option>
+                                <option value="@e.IdEdit" selected="@(Model?.IdEdit == e.IdEdit ? "selected" : null)">@e.Nombre</option>
                             }
                         </select>
                     </div>
@@ -154,7 +154,7 @@
                             <option value="">-- Sin país --</option>
                             @foreach (var p in paises)
                             {
-                                <option value="@p.IdPais" selected="@(Model.IdPais.HasValue && Model.IdPais.Value == p.IdPais ? "selected" : null)">@p.Nombre</option>
+                                <option value="@p.IdPais" selected="@(Model?.IdPais.HasValue == true && Model.IdPais.Value == p.IdPais ? "selected" : null)">@p.Nombre</option>
                             }
                         </select>
                     </div>
